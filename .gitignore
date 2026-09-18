@@ -1,0 +1,123 @@
+# ==============================================================================
+# SIH 2026 - DIABETIC RETINOPATHY SCREENING SYSTEM .gitignore
+# Production-quality configuration tailored specifically to this repository
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. MATLAB TEMPORARY, AUTOSAVE & COMPILED FILES
+# ------------------------------------------------------------------------------
+*.asv
+*.m~
+*.autosave
+*.mex*
+*.slxc
+*.matlab
+slprj/
+matlab.log
+
+# ------------------------------------------------------------------------------
+# 2. MATLAB GENERATED MAT FILES & RUNTIME ARTIFACTS
+# ------------------------------------------------------------------------------
+# Evaluation metric caches & comparison outputs (recomputed by eval scripts)
+baseline_eval_metrics.mat
+preprocessed_eval_metrics.mat
+model_comparison_results.mat
+
+# Redundant / backup / intermediate model weights (>40 MB each)
+# trained_dr_model_backup.mat is a duplicate of the baseline model
+# dr_network.mat is an unreferenced intermediate export
+trained_dr_model_backup.mat
+dr_network.mat
+
+# OPTIONAL MODEL SELECTION:
+# GitHub rejects files > 100 MB, but warns at > 50 MB.
+# 'trained_dr_model_preprocessed.mat' (~41.7 MB) is the active production model used by drScreen.m.
+# 'trained_dr_model.mat' (~41.7 MB) is the legacy fallback baseline model.
+# If hosting model weights via Git LFS, cloud storage (S3/GCS/Zenodo), or release tags,
+# uncomment the two lines below to keep git clone lightweight:
+# trained_dr_model_preprocessed.mat
+# trained_dr_model.mat
+
+# Generated inference & screening outputs
+result.json
+gradcam.png
+training.png
+
+# ------------------------------------------------------------------------------
+# 3. DATASETS (HEAVY RAW & PROCESSED IMAGES)
+# ------------------------------------------------------------------------------
+# Kaggle dataset raw images (~8.0 GB, 3,662 files) - strictly excluded
+train_images/
+
+# Resized & processed dataset images (~310 MB, 3,662 files) - reproducible via prepare_preprocessed_dataset.m
+processed_train_images/
+
+# If you prefer not to redistribute the Kaggle challenge labels table, uncomment:
+# train.csv
+
+# ------------------------------------------------------------------------------
+# 4. BACKEND (Node.js & Express API)
+# ------------------------------------------------------------------------------
+backend/node_modules/
+backend/uploads/original/*
+backend/uploads/gradcam/*
+backend/uploads/results/*
+!backend/uploads/**/.gitkeep
+
+# Environment variables & secrets (preserve .env.example)
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Logs & runtime process files
+backend/logs/
+backend/*.log
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/pnpm-debug.log*
+
+# ------------------------------------------------------------------------------
+# 5. FRONTEND (Vite & React)
+# ------------------------------------------------------------------------------
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Environment variables & secrets (preserve .env.example)
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Logs
+frontend/logs/
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# ------------------------------------------------------------------------------
+# 6. OPERATING SYSTEM & EDITOR / IDE ARTIFACTS
+# ------------------------------------------------------------------------------
+# OS-specific clutter
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# IDE & Editor files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+*~
