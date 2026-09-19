@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Eye, AlertTriangle, CheckCircle2, Stethoscope, Filter } from 'lucide-react';
+import { Eye, Stethoscope } from 'lucide-react';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { GradeDistributionChart } from '../../components/dashboard/GradeDistributionChart';
 import { ReferralPieChart } from '../../components/dashboard/ReferralPieChart';
@@ -8,118 +8,121 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
 export const Dashboard = ({ screenings = [], onViewScreening, onNavigateScreenings }) => {
-  // Pending Specialist Reviews Queue
-  const pendingReviews = screenings.filter((s) => !s.humanReview?.reviewed && (s.triage?.referralRequired || s.drGrade >= 2));
-  const urgentCount = pendingReviews.filter((s) => s.triage?.priority === 'URGENT' || s.drGrade === 4).length;
-  const highCount = pendingReviews.filter((s) => s.triage?.priority === 'HIGH' || s.drGrade === 3).length;
-  const mediumCount = pendingReviews.filter((s) => s.triage?.priority === 'MEDIUM' || s.drGrade === 2).length;
-  const reviewedToday = screenings.filter((s) => s.humanReview?.reviewed).length;
+  // Pending Specialist Reviews: referred cases (Grade >= 2 or referralRequired) awaiting clinician sign-off
+  const pendingReviews = screenings.filter((s) => !s.humanReview?.reviewed && (s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2));
+  const urgentCount = pendingReviews.filter((s) => s.triage?.priority === 'URGENT' || s.drGrade === 4 || s.grade === 4).length;
+  const highCount = pendingReviews.filter((s) => s.triage?.priority === 'HIGH' || s.drGrade === 3 || s.grade === 3).length;
+  const mediumCount = pendingReviews.filter((s) => s.triage?.priority === 'MEDIUM' || s.drGrade === 2 || s.grade === 2).length;
+  const reviewedTotal = screenings.filter((s) => s.humanReview?.reviewed).length;
 
-  // Sorting Pending Reviews: 1. Priority (URGENT > HIGH > MEDIUM), 2. Waiting Time
+  // Sorting Pending Reviews: Priority (URGENT > HIGH > MEDIUM), then chronological
   const priorityRank = { URGENT: 3, HIGH: 2, MEDIUM: 1, ROUTINE: 0 };
   const sortedPending = [...pendingReviews].sort((a, b) => {
     const pA = priorityRank[a.triage?.priority] || (a.drGrade === 4 ? 3 : a.drGrade === 3 ? 2 : a.drGrade === 2 ? 1 : 0);
     const pB = priorityRank[b.triage?.priority] || (b.drGrade === 4 ? 3 : b.drGrade === 3 ? 2 : b.drGrade === 2 ? 1 : 0);
     if (pB !== pA) return pB - pA;
-    return new Date(b.createdAt) - new Date(a.createdAt);
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
-      {/* Banner */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
+      {/* Top Clinical Header */}
       <div style={{
-        padding: '1.5rem',
-        borderRadius: 'var(--radius-lg)',
+        padding: '0.875rem 1.125rem',
+        borderRadius: 'var(--radius-md)',
         backgroundColor: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '1rem',
+        gap: '0.75rem',
       }}>
         <div>
-          <Badge variant="info" size="sm">OPHTHALMOLOGIST CLINICAL DASHBOARD</Badge>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.375rem', margin: 0 }}>
-            Specialist Review & Triage Queue
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+            <Badge variant="info" size="sm">OPHTHALMOLOGY WORKSTATION</Badge>
+            <Badge variant="neutral" size="sm">SPECIALIST REVIEW QUEUE</Badge>
+          </div>
+          <h2 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Specialist Review & Clinical Triage
           </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Review referred high-risk cases (Grade 2+), inspect Grad-CAM explainability, and submit clinical assessments.
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem', margin: 0 }}>
+            Review referred cases flagged with Grade ≥ 2, examine Grad-CAM spatial lesion heatmaps, and log clinical assessments.
           </p>
         </div>
 
-        <Button variant="primary" icon={Stethoscope} onClick={onNavigateScreenings}>
-          View All Screenings Database
+        <Button variant="secondary" icon={Stethoscope} onClick={onNavigateScreenings}>
+          Screenings Database
         </Button>
       </div>
 
-      {/* Specialist Queue Stat Cards */}
+      {/* Specialist Queue Metric Blocks */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '1.25rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+        gap: '0.75rem',
       }}>
         <StatCard
-          title="Total Pending Reviews"
+          title="Pending Reviews"
           value={pendingReviews.length}
-          subtitle="Referred cases awaiting review"
-          icon={Clock}
+          subtitle="Awaiting specialist assessment"
           color="var(--warning)"
         />
         <StatCard
-          title="Urgent (Grade 4)"
+          title="Urgent Cases"
           value={urgentCount}
-          subtitle="Proliferative DR"
-          icon={AlertTriangle}
+          subtitle="Proliferative DR (Grade 4)"
           color="var(--danger)"
         />
         <StatCard
-          title="High Priority (Grade 3)"
+          title="High Priority"
           value={highCount}
-          subtitle="Severe NPDR"
-          icon={AlertTriangle}
+          subtitle="Severe NPDR (Grade 3)"
           color="var(--warning)"
         />
         <StatCard
-          title="Medium Priority (Grade 2)"
+          title="Moderate Priority"
           value={mediumCount}
-          subtitle="Moderate NPDR"
-          icon={Clock}
+          subtitle="Moderate NPDR (Grade 2)"
           color="var(--info)"
         />
         <StatCard
-          title="Reviewed Today"
-          value={reviewedToday}
-          subtitle="Clinician confirmed decisions"
-          icon={CheckCircle2}
+          title="Reviewed Total"
+          value={reviewedTotal}
+          subtitle="Clinician decisions confirmed"
           color="var(--success)"
         />
       </div>
 
-      {/* PRIMARY CLINICAL WORKFLOW: PENDING SPECIALIST REVIEWS QUEUE */}
+      {/* PRIMARY WORKFLOW: PENDING SPECIALIST REVIEWS QUEUE */}
       <Card
         title="Pending Specialist Reviews Queue"
-        subtitle="Cases sorted by Priority (URGENT > HIGH > MEDIUM) and Waiting Time"
-        action={<Badge variant="warning">{sortedPending.length} Cases Pending</Badge>}
+        subtitle="Referred clinical cases prioritized by urgency and queue waiting time"
+        headerBorder={true}
+        action={
+          <Badge variant={sortedPending.length > 0 ? 'warning' : 'success'}>
+            {sortedPending.length} Cases Pending Sign-off
+          </Badge>
+        }
       >
-        <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+        <div style={{ overflowX: 'auto', margin: '0 -1.125rem -1rem -1.125rem' }}>
+          <table className="clinical-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                <th style={{ padding: '0.75rem 1rem' }}>Priority</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Patient ID</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Patient Name</th>
-                <th style={{ padding: '0.75rem 1rem' }}>DR Grade</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Confidence</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Screening Date</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Action</th>
+              <tr>
+                <th>Priority</th>
+                <th>Patient ID</th>
+                <th>Patient Name</th>
+                <th>DR Grade</th>
+                <th>Confidence</th>
+                <th>Screening Date</th>
+                <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {sortedPending.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No referred cases awaiting specialist review. All high-risk cases are cleared!
+                  <td colSpan={7} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No referred cases awaiting specialist review. All referable cases are cleared.
                   </td>
                 </tr>
               ) : (
@@ -127,28 +130,30 @@ export const Dashboard = ({ screenings = [], onViewScreening, onNavigateScreenin
                   const priority = s.triage?.priority || (s.drGrade === 4 ? 'URGENT' : s.drGrade === 3 ? 'HIGH' : 'MEDIUM');
 
                   return (
-                    <tr key={s.screeningId || s._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.875rem 1rem' }}>
-                        <Badge variant={priority === 'URGENT' ? 'danger' : priority === 'HIGH' ? 'warning' : 'info'}>
+                    <tr key={s.screeningId || s._id} style={{
+                      backgroundColor: priority === 'URGENT' ? 'rgba(220, 38, 38, 0.04)' : 'transparent',
+                    }}>
+                      <td>
+                        <Badge variant={priority === 'URGENT' ? 'danger' : priority === 'HIGH' ? 'warning' : 'info'} size="sm">
                           {priority}
                         </Badge>
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
                         {s.patientId}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)' }}>
+                      <td style={{ color: 'var(--text-secondary)' }}>
                         {s.patientName || 'Anonymous Patient'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem' }}>
-                        <Badge variant="danger">Grade {s.drGrade ?? s.grade}</Badge>
+                      <td>
+                        <Badge variant="danger" size="sm">Grade {s.drGrade ?? s.grade}</Badge>
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 500, color: 'var(--text-primary)' }}>
-                        {s.confidence != null ? (s.confidence * 100).toFixed(1) + '%' : 'N/A'}
+                      <td style={{ fontWeight: 500, color: 'var(--text-primary)' }} className="font-mono">
+                        {s.confidence != null ? `${(s.confidence * 100).toFixed(1)}%` : '—'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                        {s.createdAt ? new Date(s.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Today'}
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        {s.createdAt ? new Date(s.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <Button variant="primary" size="sm" icon={Eye} onClick={() => onViewScreening(s)}>
                           Review Case
                         </Button>
@@ -162,8 +167,8 @@ export const Dashboard = ({ screenings = [], onViewScreening, onNavigateScreenin
         </div>
       </Card>
 
-      {/* Analytics Section */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+      {/* Analytics Section - Passed with authentic screenings data */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
         <GradeDistributionChart screenings={screenings} />
         <ReferralPieChart screenings={screenings} />
       </div>

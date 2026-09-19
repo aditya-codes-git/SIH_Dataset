@@ -16,7 +16,7 @@ export const UploadDropzone = ({ onAnalyze }) => {
     if (!selectedFile) return;
 
     if (!selectedFile.type.match(/^image\/(png|jpeg|jpg|tiff|bmp)$/i) && !selectedFile.name.match(/\.(png|jpe?g|tiff?|bmp)$/i)) {
-      setError('Please upload a valid retinal fundus image format (PNG, JPEG, TIFF, BMP).');
+      setError('Please upload a supported retinal fundus image format (PNG, JPEG, TIFF, BMP).');
       return;
     }
 
@@ -58,29 +58,26 @@ export const UploadDropzone = ({ onAnalyze }) => {
   };
 
   return (
-    <Card className="animate-fade-in" style={{ maxWidth: '720px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-          New Retinal Screening
-        </h2>
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-          Upload an uncompressed fundus image for AI-assisted Diabetic Retinopathy screening.
-        </p>
-      </div>
-
+    <Card
+      title="Retinal Fundus Screening"
+      subtitle="Acquire and submit an uncompressed fundus photograph for clinical decision support"
+      headerBorder={true}
+      style={{ maxWidth: '680px', margin: '0 auto' }}
+    >
       {error && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.75rem 1rem',
-          borderRadius: 'var(--radius-md)',
+          gap: '0.4rem',
+          padding: '0.625rem 0.75rem',
+          borderRadius: 'var(--radius-xs)',
           backgroundColor: 'var(--danger-bg)',
+          border: '1px solid var(--danger-border)',
           color: 'var(--danger)',
-          fontSize: '0.875rem',
-          marginBottom: '1rem',
+          fontSize: '0.75rem',
+          marginBottom: '0.875rem',
         }}>
-          <AlertCircle size={16} />
+          <AlertCircle size={14} />
           <span>{error}</span>
         </div>
       )}
@@ -94,9 +91,9 @@ export const UploadDropzone = ({ onAnalyze }) => {
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
           style={{
-            border: `2px dashed ${dragActive ? 'var(--primary)' : 'var(--border-hover)'}`,
-            borderRadius: 'var(--radius-lg)',
-            padding: '3rem 2rem',
+            border: `1px dashed ${dragActive ? 'var(--primary)' : 'var(--border-hover)'}`,
+            borderRadius: 'var(--radius-sm)',
+            padding: '2.5rem 1.5rem',
             textAlign: 'center',
             backgroundColor: dragActive ? 'var(--primary-light)' : 'var(--bg-secondary)',
             cursor: 'pointer',
@@ -111,42 +108,42 @@ export const UploadDropzone = ({ onAnalyze }) => {
             onChange={(e) => handleFileSelect(e.target.files[0])}
           />
           <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: 'var(--radius-full)',
+            width: '36px',
+            height: '36px',
+            borderRadius: 'var(--radius-xs)',
             backgroundColor: 'var(--bg-card)',
             color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 1rem auto',
-            boxShadow: 'var(--shadow-sm)',
+            margin: '0 auto 0.5rem auto',
+            border: '1px solid var(--border-color)',
           }}>
-            <UploadCloud size={24} />
+            <UploadCloud size={20} />
           </div>
-          <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-            Click to upload or drag & drop retinal fundus image
+          <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Select retinal fundus photograph or drag & drop file
           </p>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Supports PNG, JPEG, TIFF, BMP (Up to 50MB)
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem', margin: 0 }}>
+            Standard formats: PNG, JPEG, TIFF, BMP (Original byte stream preserved)
           </p>
         </div>
       ) : (
         /* Image Preview Box */
         <div style={{
           border: '1px solid var(--border-color)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '1rem',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.75rem',
           backgroundColor: 'var(--bg-secondary)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <ImageIcon size={20} color="var(--primary)" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ImageIcon size={16} color="var(--primary)" />
               <div>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+                <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
                   {file.name}
                 </p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', margin: 0 }}>
                   {(file.size / (1024 * 1024)).toFixed(2)} MB
                 </p>
               </div>
@@ -157,47 +154,38 @@ export const UploadDropzone = ({ onAnalyze }) => {
           </div>
 
           <div style={{
-            maxHeight: '260px',
+            maxHeight: '240px',
             overflow: 'hidden',
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: '#000',
+            borderRadius: 'var(--radius-xs)',
+            backgroundColor: '#000000',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '1rem',
           }}>
             <img
               src={preview}
-              alt="Uploaded Retinal Fundus Preview"
-              style={{ maxHeight: '260px', maxWidth: '100%', objectFit: 'contain' }}
+              alt="Retinal Fundus Preview"
+              style={{ maxHeight: '240px', maxWidth: '100%', objectFit: 'contain' }}
             />
           </div>
         </div>
       )}
 
-      {/* Patient Meta Input Form */}
-      <form onSubmit={handleSubmit} style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {/* Patient Input & Action */}
+      <form onSubmit={handleSubmit} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
             Patient ID (Optional)
           </label>
           <div style={{ position: 'relative' }}>
-            <User size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+            <User size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.625rem', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
-              placeholder="e.g. PATIENT-8021 or leave blank for auto-assign"
+              placeholder="e.g. PATIENT-8021 (leave blank for automatic assignment)"
               value={patientId}
               onChange={(e) => setPatientId(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem 0.5rem 2.25rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-              }}
+              className="clinical-input"
+              style={{ paddingLeft: '2rem' }}
             />
           </div>
         </div>
@@ -205,10 +193,10 @@ export const UploadDropzone = ({ onAnalyze }) => {
         <Button
           type="submit"
           variant="primary"
-          size="lg"
+          size="md"
           disabled={!file}
           icon={ArrowRight}
-          style={{ width: '100%', marginTop: '0.5rem' }}
+          style={{ width: '100%', marginTop: '0.25rem' }}
         >
           Run MATLAB AI Screening
         </Button>

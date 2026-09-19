@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, Eye, User, ArrowRight } from 'lucide-react';
+import { Search, Filter, ArrowRight } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -8,13 +8,14 @@ export const Patients = ({ screenings = [], onSelectPatient }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('ALL');
 
-  // Group screenings by patientId
+  // Group real screenings by patientId
   const patientMap = {};
   screenings.forEach((s) => {
     const pid = s.patientId || 'PATIENT-ANONYMOUS';
     if (!patientMap[pid]) {
       patientMap[pid] = {
         patientId: pid,
+        patientName: s.patientName || 'Anonymous Patient',
         screenings: [],
         latestScreening: s,
       };
@@ -23,54 +24,50 @@ export const Patients = ({ screenings = [], onSelectPatient }) => {
   });
 
   const patientList = Object.values(patientMap).filter((p) => {
-    const pidMatch = p.patientId.toLowerCase().includes(search.toLowerCase());
+    const pidMatch = p.patientId.toLowerCase().includes(search.toLowerCase()) ||
+                     p.patientName.toLowerCase().includes(search.toLowerCase());
     if (!pidMatch) return false;
-    if (filter === 'REFERABLE') return p.latestScreening?.referable;
-    if (filter === 'NON_REFERABLE') return p.latestScreening && !p.latestScreening.referable && p.latestScreening.status !== 'UNGRADABLE';
+    if (filter === 'REFERABLE') return p.latestScreening?.referable || p.latestScreening?.drGrade >= 2;
+    if (filter === 'NON_REFERABLE') return p.latestScreening && !p.latestScreening.referable && p.latestScreening.status !== 'UNGRADABLE' && p.latestScreening.drGrade < 2;
     if (filter === 'UNGRADABLE') return p.latestScreening?.status === 'UNGRADABLE';
     return true;
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Header controls */}
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
+      {/* Search and Filters */}
+      <Card style={{ padding: '0.75rem 1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
-            <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+            <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.625rem', top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
-              placeholder="Search patients by ID..."
+              placeholder="Search patients by ID or Name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem 0.5rem 2.25rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-              }}
+              className="clinical-input"
+              style={{ paddingLeft: '2rem' }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Filter size={16} color="var(--text-secondary)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)', marginRight: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Filter size={12} /> Filter:
+            </span>
             {['ALL', 'REFERABLE', 'NON_REFERABLE', 'UNGRADABLE'].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 style={{
-                  padding: '0.375rem 0.75rem',
-                  borderRadius: 'var(--radius-full)',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: filter === f ? 'var(--primary)' : 'var(--bg-secondary)',
-                  color: filter === f ? '#FFF' : 'var(--text-secondary)',
-                  fontSize: '0.75rem',
-                  fontWeight: 500,
+                  padding: '0.25rem 0.55rem',
+                  borderRadius: 'var(--radius-xs)',
+                  border: filter === f ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                  backgroundColor: filter === f ? 'var(--primary-light)' : 'transparent',
+                  color: filter === f ? 'var(--primary)' : 'var(--text-secondary)',
+                  fontSize: '0.71875rem',
+                  fontWeight: filter === f ? 600 : 400,
                   cursor: 'pointer',
+                  transition: 'var(--transition)',
                 }}
               >
                 {f.replace('_', ' ')}
@@ -80,24 +77,29 @@ export const Patients = ({ screenings = [], onSelectPatient }) => {
         </div>
       </Card>
 
-      {/* Patient Table */}
-      <Card title="Patient Registry" subtitle={`Showing ${patientList.length} registered patients`}>
-        <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+      {/* Patient Registry Table */}
+      <Card
+        title="Patients Registry"
+        subtitle={`Showing ${patientList.length} registered patient profiles`}
+        headerBorder={true}
+      >
+        <div style={{ overflowX: 'auto', margin: '0 -1.125rem -1rem -1.125rem' }}>
+          <table className="clinical-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                <th style={{ padding: '0.75rem 1rem' }}>Patient ID</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Screenings Count</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Latest Grade</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Model Confidence</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Latest Status</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Action</th>
+              <tr>
+                <th>Patient ID</th>
+                <th>Patient Name</th>
+                <th>Screenings</th>
+                <th>Latest Grade</th>
+                <th>Confidence</th>
+                <th>Latest Status</th>
+                <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {patientList.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan={7} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     No patient records matching the selected filter.
                   </td>
                 </tr>
@@ -105,46 +107,54 @@ export const Patients = ({ screenings = [], onSelectPatient }) => {
                 patientList.map((p) => {
                   const s = p.latestScreening;
                   const isUngradable = s.status === 'UNGRADABLE';
+                  const isReferable = s.referable || s.drGrade >= 2;
 
                   return (
-                    <tr key={p.patientId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <User size={16} color="var(--primary)" />
-                        <span>{p.patientId}</span>
+                    <tr key={p.patientId}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
+                        {p.patientId}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)' }}>
-                        {p.screenings.length} screening(s)
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        {p.patientName}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem' }}>
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                        {p.screenings.length} record(s)
+                      </td>
+
+                      <td>
                         {isUngradable ? (
-                          <Badge variant="warning">UNGRADABLE</Badge>
+                          <Badge variant="warning" size="sm">UNGRADABLE</Badge>
                         ) : (
-                          <Badge variant={s.referable ? 'danger' : 'success'}>
+                          <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
                             Grade {s.drGrade ?? s.grade}
                           </Badge>
                         )}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 500, color: 'var(--text-primary)' }}>
-                        {s.confidence != null ? (s.confidence * 100).toFixed(2) + '%' : 'N/A'}
+                      <td style={{ fontWeight: 500, color: 'var(--text-primary)' }} className="font-mono">
+                        {s.confidence != null ? `${(s.confidence * 100).toFixed(1)}%` : '—'}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem' }}>
-                        <Badge variant={s.referable ? 'danger' : 'success'}>
-                          {s.referral || (s.referable ? 'REFERABLE' : 'NON-REFERABLE')}
-                        </Badge>
+                      <td>
+                        {isUngradable ? (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Recapture</span>
+                        ) : (
+                          <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
+                            {s.referral || (isReferable ? 'REFERABLE' : 'NON-REFERABLE')}
+                          </Badge>
+                        )}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <Button
                           variant="secondary"
                           size="sm"
                           icon={ArrowRight}
                           onClick={() => onSelectPatient(p)}
                         >
-                          Patient Details
+                          Patient History
                         </Button>
                       </td>
                     </tr>

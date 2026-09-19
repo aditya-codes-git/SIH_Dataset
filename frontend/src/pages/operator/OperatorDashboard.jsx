@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileUp, UserPlus, ListTodo, Users, CheckCircle2, AlertTriangle, Clock, RefreshCw, ArrowRight } from 'lucide-react';
+import { FileUp, ListTodo, Users } from 'lucide-react';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -9,154 +9,179 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
   const totalScreened = screenings.length;
   const recapturedCount = screenings.filter((s) => s.status === 'UNGRADABLE').length;
   const routineCount = screenings.filter((s) => s.status === 'GRADABLE' && (!s.triage?.referralRequired && (s.drGrade === 0 || s.drGrade === 1))).length;
-  const referralCount = screenings.filter((s) => s.status === 'GRADABLE' && (s.triage?.referralRequired || s.drGrade >= 2)).length;
-  const highPriorityCount = screenings.filter((s) => s.status === 'GRADABLE' && (s.triage?.priority === 'HIGH' || s.triage?.priority === 'URGENT' || s.drGrade >= 3)).length;
+  const referableCount = screenings.filter((s) => s.status === 'GRADABLE' && (s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2)).length;
+  const pendingReviewCount = screenings.filter((s) => s.status === 'GRADABLE' && (s.triage?.referralRequired || s.drGrade >= 2) && !s.humanReview?.reviewed).length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
-      {/* Camp Operational Banner */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
+      {/* Camp Operational Top Bar */}
       <div style={{
-        padding: '1.5rem',
-        borderRadius: 'var(--radius-lg)',
+        padding: '0.875rem 1.125rem',
+        borderRadius: 'var(--radius-md)',
         backgroundColor: 'var(--bg-card)',
         border: '1px solid var(--border-color)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '1rem',
+        gap: '0.75rem',
       }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Badge variant="info" size="sm">RURAL HEALTH CAMP</Badge>
-            <Badge variant="success" size="sm">OPERATOR WORKFLOW</Badge>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+            <Badge variant="info" size="sm">RURAL HEALTH SCREENING</Badge>
+            <Badge variant="neutral" size="sm">OPERATOR STATION</Badge>
           </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.375rem', margin: 0 }}>
-            Rural Eye Camp — Operator Screening Operations
+          <h2 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Rural Retinal Screening Operations
           </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            Perform patient registration, fundus capture, image quality checks, and AI screening routing for specialist review.
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem', margin: 0 }}>
+            Perform patient intake, fundus acquisition, automated quality checks, and routing for specialist evaluation.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <Button variant="primary" icon={FileUp} onClick={onNavigateScreening}>
-            + NEW SCREENING
+            New Screening
           </Button>
           <Button variant="secondary" icon={ListTodo} onClick={onNavigateQueue}>
-            Screening Queue
+            Queue
+          </Button>
+          <Button variant="secondary" icon={Users} onClick={onNavigatePatients}>
+            Patients
           </Button>
         </div>
       </div>
 
-      {/* Operational Camp Statistics */}
+      {/* Operational Statistics - Compact Metric Blocks */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1.25rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+        gap: '0.75rem',
       }}>
         <StatCard
-          title="Patients Screened"
+          title="Total Screenings"
           value={totalScreened}
-          subtitle="Total camp screenings"
-          icon={FileUp}
+          subtitle="All camp submissions"
           color="var(--primary)"
+        />
+        <StatCard
+          title="Pending Specialist Review"
+          value={pendingReviewCount}
+          subtitle="Awaiting clinician sign-off"
+          color="var(--warning)"
+        />
+        <StatCard
+          title="Referable Cases"
+          value={referableCount}
+          subtitle="Grade ≥ 2 identified"
+          color="var(--danger)"
         />
         <StatCard
           title="Routine Follow-ups"
           value={routineCount}
           subtitle="Low Risk (Grade 0–1)"
-          icon={CheckCircle2}
           color="var(--success)"
         />
         <StatCard
-          title="Specialist Referrals"
-          value={referralCount}
-          subtitle="Referred to Doctor (Grade 2+)"
-          icon={Users}
-          color="var(--warning)"
-        />
-        <StatCard
-          title="High Priority Referrals"
-          value={highPriorityCount}
-          subtitle="Severe cases (Grade 3–4)"
-          icon={AlertTriangle}
-          color="var(--danger)"
-        />
-        <StatCard
-          title="Images Recaptured"
+          title="Requires Recapture"
           value={recapturedCount}
-          subtitle="IQA quality warnings"
-          icon={RefreshCw}
-          color="var(--info)"
+          subtitle="IQA criteria not met"
+          color="var(--warning)"
         />
       </div>
 
-      {/* Recent Screening Queue Table */}
-      <Card title="Recent Camp Screening Queue" subtitle="Operational status and routing decisions">
-        <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+      {/* Main Operational Focus: Screening Queue Table */}
+      <Card
+        title="Screening Center Operational Queue"
+        subtitle="Live queue of processed field screenings with quality gates and routing actions"
+        headerBorder={true}
+        action={
+          <span style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)' }}>
+            Showing {Math.min(screenings.length, 10)} of {screenings.length} records
+          </span>
+        }
+      >
+        <div style={{ overflowX: 'auto', margin: '0 -1.125rem -1rem -1.125rem' }}>
+          <table className="clinical-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                <th style={{ padding: '0.75rem 1rem' }}>Patient ID</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Name</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Time</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Image Quality</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Screening Result</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Camp Routing Action</th>
+              <tr>
+                <th>Patient ID</th>
+                <th>Patient Name</th>
+                <th>Time</th>
+                <th>Image Quality</th>
+                <th>DR Grade</th>
+                <th>Referral Status</th>
+                <th style={{ textAlign: 'right' }}>Routing Action</th>
               </tr>
             </thead>
             <tbody>
               {screenings.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No screenings in queue. Click "+ NEW SCREENING" to start.
+                  <td colSpan={7} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No screenings in queue. Click "New Screening" to register a patient and upload fundus images.
                   </td>
                 </tr>
               ) : (
-                screenings.slice(0, 6).map((s) => {
+                screenings.slice(0, 10).map((s) => {
                   const isUngradable = s.status === 'UNGRADABLE';
-                  const isReferable = s.triage?.referralRequired || s.drGrade >= 2;
+                  const isReferable = s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2;
                   const priority = s.triage?.priority || 'ROUTINE';
 
                   return (
-                    <tr key={s.screeningId || s._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <tr key={s.screeningId || s._id} style={{
+                      backgroundColor: isUngradable ? 'rgba(217, 119, 6, 0.03)' : isReferable ? 'rgba(220, 38, 38, 0.03)' : 'transparent',
+                    }}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
                         {s.patientId || 'PATIENT-ANONYMOUS'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)' }}>
+
+                      <td style={{ color: 'var(--text-secondary)' }}>
                         {s.patientName || 'Anonymous Patient'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                        {s.createdAt ? new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        {s.createdAt ? new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem' }}>
+
+                      <td>
                         {isUngradable ? (
-                          <Badge variant="warning">Recapture Required</Badge>
+                          <Badge variant="warning" size="sm">Recapture Required</Badge>
                         ) : (
-                          <Badge variant="success">Quality Passed</Badge>
+                          <Badge variant="success" size="sm">Quality Passed</Badge>
                         )}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem' }}>
+
+                      <td>
                         {isUngradable ? (
-                          <span style={{ color: 'var(--warning)', fontSize: '0.8125rem' }}>IQA Failed</span>
+                          <span style={{ color: 'var(--warning)', fontSize: '0.75rem' }}>IQA Failed</span>
                         ) : (
-                          <Badge variant={isReferable ? 'danger' : 'success'}>
+                          <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
                             Grade {s.drGrade ?? s.grade ?? 0}
                           </Badge>
                         )}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem' }}>
+
+                      <td>
                         {isUngradable ? (
-                          <Button variant="outline" size="sm" icon={RefreshCw} onClick={onNavigateScreening}>
-                            Recapture Image
-                          </Button>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
                         ) : isReferable ? (
-                          <Badge variant={priority === 'URGENT' ? 'danger' : 'warning'}>
+                          <Badge variant={priority === 'URGENT' ? 'danger' : 'warning'} size="sm">
                             Specialist Review ({priority})
                           </Badge>
                         ) : (
-                          <Badge variant="success">Routine Follow-up</Badge>
+                          <Badge variant="success" size="sm">Routine Follow-up</Badge>
+                        )}
+                      </td>
+
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                        {isUngradable ? (
+                          <Button variant="outline" size="sm" icon={RefreshCw} onClick={onNavigateScreening}>
+                            Recapture
+                          </Button>
+                        ) : (
+                          <Button variant="secondary" size="sm" icon={ListTodo} onClick={onNavigateQueue}>
+                            View Queue
+                          </Button>
                         )}
                       </td>
                     </tr>

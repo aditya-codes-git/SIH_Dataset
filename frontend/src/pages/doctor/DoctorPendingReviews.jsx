@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Clock, AlertCircle } from 'lucide-react';
+import { Eye, Clock } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -8,71 +8,78 @@ export const DoctorPendingReviews = ({ screenings = [], onViewScreening }) => {
   const pendingList = screenings.filter((s) => !s.humanReview?.reviewed);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
       <Card
         title="Pending Clinical Reviews"
-        subtitle={`Showing ${pendingList.length} screening(s) awaiting ophthalmologist sign-off`}
+        subtitle={`Showing ${pendingList.length} screening record(s) awaiting ophthalmologist assessment`}
+        headerBorder={true}
         action={
           <Badge variant="warning">
-            <Clock size={12} />
-            <span>{pendingList.length} Pending</span>
+            <Clock size={11} />
+            <span>{pendingList.length} Pending Sign-off</span>
           </Badge>
         }
       >
-        <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+        <div style={{ overflowX: 'auto', margin: '0 -1.125rem -1rem -1.125rem' }}>
+          <table className="clinical-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                <th style={{ padding: '0.75rem 1rem' }}>Screening ID</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Patient ID</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Date</th>
-                <th style={{ padding: '0.75rem 1rem' }}>DR Grade</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Confidence</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Referral Status</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Action</th>
+              <tr>
+                <th>Screening ID</th>
+                <th>Patient ID</th>
+                <th>Date</th>
+                <th>DR Grade</th>
+                <th>Confidence</th>
+                <th>Referral Status</th>
+                <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {pendingList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    All uploaded screenings have been reviewed by a clinician. Excellent!
+                  <td colSpan={7} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    All uploaded screenings have been reviewed by a clinician.
                   </td>
                 </tr>
               ) : (
                 pendingList.map((s) => {
                   const isUngradable = s.status === 'UNGRADABLE';
+                  const isReferable = s.referable || (s.drGrade >= 2) || s.triage?.referralRequired;
+
                   return (
-                    <tr key={s.screeningId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.875rem 1rem', fontSize: '0.8125rem', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
-                        {s.screeningId ? s.screeningId.slice(0, 8) + '...' : 'N/A'}
+                    <tr key={s.screeningId || s._id}>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }} className="font-mono">
+                        {s.screeningId ? s.screeningId.slice(0, 10) : '—'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {s.patientId}
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
+                        {s.patientId || 'PATIENT-ANONYMOUS'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                        {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'Today'}
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem' }}>
+                      <td>
                         {isUngradable ? (
-                          <Badge variant="warning">UNGRADABLE</Badge>
+                          <Badge variant="warning" size="sm">UNGRADABLE</Badge>
                         ) : (
-                          <Badge variant={s.referable ? 'danger' : 'success'}>
+                          <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
                             Grade {s.drGrade ?? s.grade}
                           </Badge>
                         )}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 500, color: 'var(--text-primary)' }}>
-                        {s.confidence != null ? (s.confidence * 100).toFixed(2) + '%' : 'N/A'}
+                      <td style={{ fontWeight: 500, color: 'var(--text-primary)' }} className="font-mono">
+                        {s.confidence != null ? `${(s.confidence * 100).toFixed(1)}%` : '—'}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem' }}>
-                        <Badge variant={s.referable ? 'danger' : 'success'}>
-                          {s.referral || (s.referable ? 'REFERABLE' : 'NON-REFERABLE')}
-                        </Badge>
+                      <td>
+                        {isUngradable ? (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
+                        ) : (
+                          <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
+                            {isReferable ? 'REFERABLE' : 'NON-REFERABLE'}
+                          </Badge>
+                        )}
                       </td>
-                      <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <Button variant="primary" size="sm" icon={Eye} onClick={() => onViewScreening(s)}>
-                          Perform Clinical Review
+                          Clinical Review
                         </Button>
                       </td>
                     </tr>

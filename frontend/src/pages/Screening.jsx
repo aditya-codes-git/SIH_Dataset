@@ -20,14 +20,11 @@ export const Screening = ({ onScreeningComplete }) => {
     }
 
     try {
-      // Step 2: Quality check simulation UI feedback
       setTimeout(() => setCurrentStep(2), 600);
-      // Step 3: MATLAB execution UI feedback
       setTimeout(() => setCurrentStep(3), 1500);
 
       const result = await api.createScreening(formData);
 
-      // Step 4: Explanation ready UI feedback
       setCurrentStep(4);
       setTimeout(() => {
         setIsProcessing(false);
@@ -37,21 +34,22 @@ export const Screening = ({ onScreeningComplete }) => {
       }, 500);
     } catch (err) {
       console.error('Screening upload error:', err);
-      setError(err.message || 'Screening could not be completed. Please try again.');
+      setError(err.message || 'Screening could not be completed. Please verify engine status.');
       setIsProcessing(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '780px', margin: '0 auto' }} className="animate-fade-in">
       {error && (
         <div style={{
-          padding: '1rem',
-          borderRadius: 'var(--radius-md)',
+          padding: '0.75rem 1rem',
+          borderRadius: 'var(--radius-xs)',
           backgroundColor: 'var(--danger-bg)',
+          border: '1px solid var(--danger-border)',
           color: 'var(--danger)',
-          fontSize: '0.875rem',
-          marginBottom: '1.5rem',
+          fontSize: '0.8125rem',
+          marginBottom: '1rem',
           textAlign: 'center',
         }}>
           {error}

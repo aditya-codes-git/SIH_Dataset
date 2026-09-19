@@ -1,99 +1,106 @@
 import React from 'react';
-import { Eye, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import { Eye, CheckCircle2, Clock } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 
 export const RecentScreeningsTable = ({ screenings = [], onViewScreening }) => {
   return (
-    <Card title="Recent Screenings" subtitle="Latest patient retinal screening records from backend">
-      <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+    <Card
+      title="Recent Clinical Screening Queue"
+      subtitle="Latest patient retinal screening records logged from field camps"
+      headerBorder={true}
+    >
+      <div style={{ overflowX: 'auto', margin: '0 -1.125rem -1rem -1.125rem' }}>
+        <table className="clinical-table">
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-              <th style={{ padding: '0.75rem 1rem' }}>Patient ID</th>
-              <th style={{ padding: '0.75rem 1rem' }}>Date</th>
-              <th style={{ padding: '0.75rem 1rem' }}>DR Grade</th>
-              <th style={{ padding: '0.75rem 1rem' }}>Confidence</th>
-              <th style={{ padding: '0.75rem 1rem' }}>Referral Status</th>
-              <th style={{ padding: '0.75rem 1rem' }}>Review Status</th>
-              <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Action</th>
+            <tr>
+              <th>Patient ID</th>
+              <th>Date / Time</th>
+              <th>Image Quality</th>
+              <th>DR Grade</th>
+              <th>Confidence</th>
+              <th>Referral Status</th>
+              <th>Review Status</th>
+              <th style={{ textAlign: 'right' }}>Action</th>
             </tr>
           </thead>
           <tbody>
             {screenings.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  No screening records available. Click "Screen New Patient" to upload an image.
+                <td colSpan={8} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No screening records logged. New screenings will appear here.
                 </td>
               </tr>
             ) : (
               screenings.slice(0, 10).map((s) => {
                 const isUngradable = s.status === 'UNGRADABLE';
-                const isReferable = s.referable;
-                const confidence = s.confidence != null ? (s.confidence * 100).toFixed(2) + '%' : 'N/A';
+                const isReferable = s.triage?.referralRequired || s.referable || s.drGrade >= 2;
+                const confidence = s.confidence != null ? `${(s.confidence * 100).toFixed(1)}%` : '—';
                 const isReviewed = s.humanReview?.reviewed;
 
                 return (
-                  <tr
-                    key={s.screeningId || s._id}
-                    style={{
-                      borderBottom: '1px solid var(--border-color)',
-                      transition: 'var(--transition)',
-                    }}
-                  >
-                    <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <tr key={s.screeningId || s._id}>
+                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
                       {s.patientId || 'PATIENT-ANONYMOUS'}
                     </td>
 
-                    <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                      {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'Today'}
+                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                      {s.createdAt ? new Date(s.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'}
                     </td>
 
-                    <td style={{ padding: '0.875rem 1rem' }}>
+                    <td>
                       {isUngradable ? (
-                        <Badge variant="warning">UNGRADABLE</Badge>
+                        <Badge variant="warning" size="sm">Recapture Required</Badge>
                       ) : (
-                        <Badge variant={isReferable ? 'danger' : 'success'}>
-                          Grade {s.drGrade ?? s.grade}
+                        <Badge variant="success" size="sm">Quality Passed</Badge>
+                      )}
+                    </td>
+
+                    <td>
+                      {isUngradable ? (
+                        <span style={{ color: 'var(--warning)', fontSize: '0.75rem' }}>IQA Failed</span>
+                      ) : (
+                        <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
+                          Grade {s.drGrade ?? s.grade ?? 0}
                         </Badge>
                       )}
                     </td>
 
-                    <td style={{ padding: '0.875rem 1rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                    <td style={{ fontWeight: 500, color: 'var(--text-primary)' }} className="font-mono">
                       {confidence}
                     </td>
 
-                    <td style={{ padding: '0.875rem 1rem' }}>
+                    <td>
                       {isUngradable ? (
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--warning)' }}>Recapture Required</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
                       ) : (
-                        <Badge variant={isReferable ? 'danger' : 'success'}>
-                          {s.referral || (isReferable ? 'REFERABLE DR' : 'NON-REFERABLE DR')}
+                        <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
+                          {isReferable ? 'Specialist Referral' : 'Routine Follow-up'}
                         </Badge>
                       )}
                     </td>
 
-                    <td style={{ padding: '0.875rem 1rem' }}>
+                    <td>
                       {isReviewed ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--success)', fontSize: '0.8125rem', fontWeight: 500 }}>
-                          <CheckCircle2 size={14} /> Reviewed
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--success)', fontSize: '0.75rem', fontWeight: 500 }}>
+                          <CheckCircle2 size={13} /> Reviewed
                         </span>
                       ) : (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                          <Clock size={14} /> Pending
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                          <Clock size={13} /> Pending
                         </span>
                       )}
                     </td>
 
-                    <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       <Button
                         variant="secondary"
                         size="sm"
                         icon={Eye}
                         onClick={() => onViewScreening(s)}
                       >
-                        View Result
+                        Inspect
                       </Button>
                     </td>
                   </tr>

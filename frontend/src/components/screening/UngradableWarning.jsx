@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw, Eye, Sun, Focus } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Focus, Sun, Eye } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -8,28 +8,30 @@ export const UngradableWarning = ({ quality, message, onReset }) => {
   const q = quality || {};
 
   return (
-    <Card className="animate-fade-in" style={{ borderLeft: '4px solid var(--warning)', maxWidth: '720px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
-        <div style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: 'var(--radius-full)',
-          backgroundColor: 'var(--warning-bg)',
-          color: 'var(--warning)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}>
-          <AlertTriangle size={24} />
-        </div>
+    <Card
+      style={{ borderLeft: '3px solid var(--warning)' }}
+      title="Image Quality Gate — Recapture Required"
+      subtitle="Automated Image Quality Assessment (IQA) stopped classification"
+      headerBorder={true}
+      action={<Badge variant="warning">UNGRADABLE IMAGE</Badge>}
+    >
+      <div style={{
+        padding: '0.75rem 0.875rem',
+        borderRadius: 'var(--radius-xs)',
+        backgroundColor: 'var(--warning-bg)',
+        border: '1px solid var(--warning-border)',
+        marginBottom: '0.875rem',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '0.625rem',
+      }}>
+        <AlertTriangle size={18} color="var(--warning)" style={{ flexShrink: 0, marginTop: '2px' }} />
         <div>
-          <Badge variant="warning" size="md">UNGRADABLE IMAGE</Badge>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.375rem', margin: 0 }}>
-            Image Quality is Insufficient for DR Screening
-          </h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-            {q.reason || message || 'The image did not satisfy MATLAB Image Quality Assessment criteria.'}
+          <strong style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', display: 'block' }}>
+            {q.reason || message || 'Image quality criteria not met.'}
+          </strong>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0, marginTop: '0.2rem' }}>
+            Retinal classification was withheld to prevent unreliable automated diagnostic predictions. Please reposition patient and acquire a new photograph.
           </p>
         </div>
       </div>
@@ -38,49 +40,49 @@ export const UngradableWarning = ({ quality, message, onReset }) => {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '0.75rem',
-        backgroundColor: 'var(--bg-secondary)',
-        padding: '1rem',
-        borderRadius: 'var(--radius-md)',
-        marginBottom: '1.5rem',
+        gap: '0.5rem',
+        marginBottom: '1rem',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Focus size={16} color="var(--primary)" />
-          <div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Focus Score</p>
-            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-              {q.focusScore != null ? q.focusScore.toFixed(6) : 'N/A'}
-            </p>
+        <div style={{ padding: '0.5rem 0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-secondary)', fontSize: '0.6875rem', marginBottom: '0.15rem' }}>
+            <Focus size={13} color="var(--primary)" />
+            <span>Focus Variance</span>
           </div>
+          <strong style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }} className="font-mono">
+            {q.focusScore != null ? q.focusScore.toFixed(6) : '—'}
+          </strong>
+          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', display: 'block' }}>Required: ≥ 0.00008</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Sun size={16} color="var(--warning)" />
-          <div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Brightness</p>
-            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-              {q.brightness != null ? q.brightness.toFixed(4) : 'N/A'}
-            </p>
+        <div style={{ padding: '0.5rem 0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-secondary)', fontSize: '0.6875rem', marginBottom: '0.15rem' }}>
+            <Sun size={13} color="var(--warning)" />
+            <span>Mean Brightness</span>
           </div>
+          <strong style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }} className="font-mono">
+            {q.brightness != null ? q.brightness.toFixed(4) : '—'}
+          </strong>
+          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', display: 'block' }}>Acceptable: 0.08–0.40</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Eye size={16} color="var(--info)" />
-          <div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>Field of View</p>
-            <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-              {q.fovRatio != null ? (q.fovRatio * 100).toFixed(1) + '%' : 'N/A'}
-            </p>
+        <div style={{ padding: '0.5rem 0.75rem', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: 'var(--text-secondary)', fontSize: '0.6875rem', marginBottom: '0.15rem' }}>
+            <Eye size={13} color="var(--primary)" />
+            <span>Field of View</span>
           </div>
+          <strong style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }} className="font-mono">
+            {q.fovRatio != null ? `${(q.fovRatio * 100).toFixed(1)}%` : '—'}
+          </strong>
+          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)', display: 'block' }}>Required: ≥ 45.0%</span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>
-          Clinical Guidance: Please recapture the fundus image ensuring clear focus and illumination.
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+          Operator Guidance: Ensure clear pupil alignment and optimal flash illumination before recapturing.
         </p>
         <Button variant="primary" icon={RefreshCw} onClick={onReset}>
-          Upload Another Image
+          Recapture Image
         </Button>
       </div>
     </Card>

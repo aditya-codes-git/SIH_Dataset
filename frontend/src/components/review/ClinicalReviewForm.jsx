@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { UserCheck, CheckCircle2, Send, Clock, FileText } from 'lucide-react';
+import { CheckCircle2, Send, Clock } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { api } from '../../services/api';
 
 export const ClinicalReviewForm = ({ screening, onReviewUpdated }) => {
-  const [reviewer, setReviewer] = useState(screening?.humanReview?.reviewer || 'Dr. Sarah Jenkins, MD');
+  const [reviewer, setReviewer] = useState(screening?.humanReview?.reviewer || '');
   const [decision, setDecision] = useState(screening?.humanReview?.decision || 'Agreed');
   const [notes, setNotes] = useState(screening?.humanReview?.notes || '');
   const [submitting, setSubmitting] = useState(false);
@@ -17,7 +17,7 @@ export const ClinicalReviewForm = ({ screening, onReviewUpdated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!reviewer || !decision) {
-      setError('Please fill in reviewer name and decision.');
+      setError('Please provide reviewer name and clinical decision.');
       return;
     }
 
@@ -30,7 +30,7 @@ export const ClinicalReviewForm = ({ screening, onReviewUpdated }) => {
         onReviewUpdated(res.screening);
       }
     } catch (err) {
-      setError(err.message || 'Failed to submit review.');
+      setError(err.message || 'Failed to submit clinical assessment.');
     } finally {
       setSubmitting(false);
     }
@@ -38,8 +38,9 @@ export const ClinicalReviewForm = ({ screening, onReviewUpdated }) => {
 
   return (
     <Card
-      title="Human Clinical Review"
-      subtitle="Ophthalmologist / Clinician independent review section"
+      title="Clinician Assessment & Sign-off"
+      subtitle="Independent ophthalmologist review and audit determination"
+      headerBorder={true}
       action={
         <Badge variant={isReviewed ? 'success' : 'neutral'}>
           {isReviewed ? 'Reviewed by Clinician' : 'Pending Review'}
@@ -47,97 +48,78 @@ export const ClinicalReviewForm = ({ screening, onReviewUpdated }) => {
       }
     >
       {isReviewed ? (
-        /* Reviewed State Display */
-        <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <CheckCircle2 size={18} color="var(--success)" />
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              Clinical Review Recorded
+        <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '0.875rem', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.625rem' }}>
+            <CheckCircle2 size={16} color="var(--success)" />
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Clinical Sign-off Recorded
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '0.5rem' }}>
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Reviewer</span>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', display: 'block' }}>Reviewing Clinician</span>
+              <strong style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
                 {screening.humanReview.reviewer}
-              </span>
+              </strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Decision</span>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', display: 'block' }}>Clinical Determination</span>
+              <strong style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
                 {screening.humanReview.decision}
-              </span>
+              </strong>
             </div>
 
             <div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Date</span>
-              <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', display: 'block' }}>Review Date</span>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <Clock size={12} color="var(--text-muted)" />
-                {screening.humanReview.reviewedAt ? new Date(screening.humanReview.reviewedAt).toLocaleDateString() : 'Today'}
+                {screening.humanReview.reviewedAt ? new Date(screening.humanReview.reviewedAt).toLocaleDateString() : '—'}
               </span>
             </div>
           </div>
 
           {screening.humanReview.notes && (
-            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.625rem', marginTop: '0.5rem' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Clinician Notes</span>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', margin: '0.25rem 0 0 0' }}>
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', display: 'block' }}>Clinician Notes</span>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-primary)', margin: '0.2rem 0 0 0' }}>
                 "{screening.humanReview.notes}"
               </p>
             </div>
           )}
         </div>
       ) : (
-        /* Form for submitting review */
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.25rem' }}>
           {error && (
-            <div style={{ padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', fontSize: '0.8125rem' }}>
+            <div style={{ padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--danger-bg)', border: '1px solid var(--danger-border)', color: 'var(--danger)', fontSize: '0.75rem' }}>
               {error}
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                 Reviewer Name
               </label>
               <input
                 type="text"
+                placeholder="e.g. Dr. Sarah Jenkins, MD"
                 value={reviewer}
                 onChange={(e) => setReviewer(e.target.value)}
                 required
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                }}
+                className="clinical-input"
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
                 Clinical Decision
               </label>
               <select
                 value={decision}
                 onChange={(e) => setDecision(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'var(--bg-secondary)',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                }}
+                className="clinical-select"
               >
                 <option value="Agreed">Agreed with MATLAB Prediction</option>
                 <option value="Re-evaluation Needed">Re-evaluation Needed</option>
@@ -147,34 +129,24 @@ export const ClinicalReviewForm = ({ screening, onReviewUpdated }) => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-              Clinician Review Notes
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+              Clinical Remarks / Notes
             </label>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add clinical observations, macula status, or referral remarks..."
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-                resize: 'vertical',
-              }}
+              placeholder="Record anatomical observations, macula involvement remarks, or follow-up interval..."
+              className="clinical-textarea"
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Note: Human review does not alter original MATLAB model output.
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '0.625rem' }}>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+              Note: Clinical review is stored alongside the immutable original model output.
             </span>
             <Button type="submit" variant="primary" icon={Send} disabled={submitting}>
-              {submitting ? 'Saving Review...' : 'Submit Clinical Review'}
+              {submitting ? 'Saving...' : 'Submit Assessment'}
             </Button>
           </div>
         </form>

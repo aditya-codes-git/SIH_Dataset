@@ -1,68 +1,97 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+  /* Surface & Base Palette (Clinical Light) */
   --bg-primary: #F8FAFC;
   --bg-secondary: #F1F5F9;
   --bg-card: #FFFFFF;
   --bg-sidebar: #FFFFFF;
+  
+  /* Text Hierarchy */
   --text-primary: #0F172A;
-  --text-secondary: #64748B;
-  --text-muted: #94A3B8;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  
+  /* Borders (Subtle 1px clinical borders) */
   --border-color: #E2E8F0;
   --border-hover: #CBD5E1;
+  --border-subtle: #F1F5F9;
   
+  /* Primary Medical Accent (Restrained Clinical Blue) */
   --primary: #0284C7;
   --primary-hover: #0369A1;
-  --primary-light: #E0F2FE;
+  --primary-light: #F0F9FF;
+  --primary-border: #BAE6FD;
   
-  --success: #10B981;
-  --success-bg: #ECFDF5;
-  --warning: #F59E0B;
+  /* Clinical Status Tokens */
+  --success: #16A34A;
+  --success-bg: #F0FDF4;
+  --success-border: #BBF7D0;
+  
+  --warning: #D97706;
   --warning-bg: #FFFBEB;
-  --danger: #EF4444;
+  --warning-border: #FDE68A;
+  
+  --danger: #DC2626;
   --danger-bg: #FEF2F2;
-  --info: #3B82F6;
-  --info-bg: #EFF6FF;
+  --danger-border: #FECACA;
+  
+  --info: #0284C7;
+  --info-bg: #F0F9FF;
+  --info-border: #BAE6FD;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  /* Restrained Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 2px 4px -1px rgba(15, 23, 42, 0.06);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  /* Moderate Clinical Radii */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
   --radius-full: 9999px;
   
-  --transition: all 0.2s ease-in-out;
+  --transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-theme="dark"] {
-  --bg-primary: #0B0F19;
-  --bg-secondary: #111827;
-  --bg-card: #172033;
-  --bg-sidebar: #111827;
+  /* True Neutral Slate / Charcoal Workstation Palette (Zero Purple) */
+  --bg-primary: #0B0F17;
+  --bg-secondary: #131B2A;
+  --bg-card: #182234;
+  --bg-sidebar: #101724;
+  
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
+  
   --border-color: #1E293B;
   --border-hover: #334155;
+  --border-subtle: #162032;
   
   --primary: #38BDF8;
   --primary-hover: #7DD3FC;
-  --primary-light: rgba(56, 189, 248, 0.12);
+  --primary-light: rgba(56, 189, 248, 0.08);
+  --primary-border: rgba(56, 189, 248, 0.25);
   
-  --success: #34D399;
-  --success-bg: rgba(52, 211, 153, 0.1);
-  --warning: #FBBF24;
-  --warning-bg: rgba(251, 191, 36, 0.1);
-  --danger: #F87171;
-  --danger-bg: rgba(248, 113, 113, 0.1);
-  --info: #60A5FA;
-  --info-bg: rgba(96, 165, 250, 0.1);
+  --success: #22C55E;
+  --success-bg: rgba(34, 197, 94, 0.08);
+  --success-border: rgba(34, 197, 94, 0.25);
+  
+  --warning: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.08);
+  --warning-border: rgba(245, 158, 11, 0.25);
+  
+  --danger: #EF4444;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --danger-border: rgba(239, 68, 68, 0.25);
+  
+  --info: #38BDF8;
+  --info-bg: rgba(56, 189, 248, 0.08);
+  --info-border: rgba(56, 189, 248, 0.25);
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -72,18 +101,19 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  line-height: 1.5;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   overflow-x: hidden;
 }
 
 button, input, select, textarea {
   font-family: inherit;
+  font-size: 0.875rem;
 }
 
 a {
@@ -91,7 +121,12 @@ a {
   text-decoration: none;
 }
 
-/* Custom Scrollbar */
+/* Monospace data tokens */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Workstation Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -101,24 +136,68 @@ a {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border-hover);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
-/* Animations */
+/* Subtle Entry Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+/* Clinical Table Styles */
+.clinical-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.84375rem;
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 2s ease-in-out infinite;
+.clinical-table th {
+  padding: 0.625rem 0.875rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.clinical-table td {
+  padding: 0.6875rem 0.875rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.clinical-table tbody tr:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Form Controls */
+.clinical-input, .clinical-select, .clinical-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.84375rem;
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: var(--transition);
+}
+
+.clinical-input:focus, .clinical-select:focus, .clinical-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.clinical-input::placeholder, .clinical-textarea::placeholder {
+  color: var(--text-muted);
 }

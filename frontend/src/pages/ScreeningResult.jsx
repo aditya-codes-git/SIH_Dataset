@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Printer, Share2, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Printer, ShieldAlert } from 'lucide-react';
 import { ModelResultCard } from '../components/screening/ModelResultCard';
 import { ImageComparison } from '../components/screening/ImageComparison';
 import { QualityCard } from '../components/screening/QualityCard';
@@ -14,9 +14,9 @@ export const ScreeningResult = ({ result: initialResult, onBack, onNewScreening 
 
   if (!result) {
     return (
-      <div style={{ textAlign: 'center', padding: '3rem' }}>
+      <div style={{ textAlign: 'center', padding: '2.5rem' }}>
         <p style={{ color: 'var(--text-secondary)' }}>No screening result selected.</p>
-        <Button onClick={onBack} icon={ArrowLeft} style={{ marginTop: '1rem' }}>
+        <Button onClick={onBack} icon={ArrowLeft} style={{ marginTop: '0.75rem' }}>
           Back to Dashboard
         </Button>
       </div>
@@ -24,16 +24,15 @@ export const ScreeningResult = ({ result: initialResult, onBack, onNewScreening 
   }
 
   const isUngradable = result.status === 'UNGRADABLE';
-
   const originalUrl = api.getFileUrl(result.originalImageUrl || `/api/files/original/${result.screeningId}.png`);
   const gradcamUrl = api.getFileUrl(result.gradcamUrl || `/api/files/gradcam/${result.screeningId}_gradcam.png`);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
       {/* Top Header Actions */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Button variant="secondary" size="sm" icon={ArrowLeft} onClick={onBack}>
-          Back to List
+          Back to Screenings
         </Button>
 
         <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -46,7 +45,6 @@ export const ScreeningResult = ({ result: initialResult, onBack, onNewScreening 
         </div>
       </div>
 
-      {/* If UNGRADABLE status, display warning card exclusively */}
       {isUngradable ? (
         <UngradableWarning
           quality={result.quality}
@@ -54,22 +52,17 @@ export const ScreeningResult = ({ result: initialResult, onBack, onNewScreening 
           onReset={onNewScreening}
         />
       ) : (
-        /* GRADABLE screening layout */
         <>
-          {/* Section 1: MATLAB Model Result Card */}
           <ModelResultCard result={result} />
-
-          {/* Section 2: Image Comparison (Original vs Grad-CAM) */}
           <ImageComparison originalUrl={originalUrl} gradcamUrl={gradcamUrl} />
 
-          {/* Section 3: Two Column Layout (Left: Quality & Clinical Review, Right: AI Assistant) */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '1.5rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '1rem',
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <QualityCard quality={result.quality} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <QualityCard quality={result.quality} status={result.status} />
               <ClinicalReviewForm
                 screening={result}
                 onReviewUpdated={(updated) => setResult(updated)}
@@ -83,23 +76,22 @@ export const ScreeningResult = ({ result: initialResult, onBack, onNewScreening 
         </>
       )}
 
-      {/* Subtle Medical Disclaimer */}
+      {/* Clinical Disclaimer */}
       <div style={{
         textAlign: 'center',
-        padding: '0.75rem',
-        borderRadius: 'var(--radius-md)',
+        padding: '0.5rem 0.75rem',
+        borderRadius: 'var(--radius-xs)',
         backgroundColor: 'var(--bg-secondary)',
-        fontSize: '0.75rem',
+        fontSize: '0.71875rem',
         color: 'var(--text-muted)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.375rem',
-        marginTop: '1rem',
+        gap: '0.35rem',
       }}>
-        <ShieldAlert size={14} color="var(--text-muted)" />
+        <ShieldAlert size={13} color="var(--text-muted)" />
         <span>
-          AI decision-support only. Final clinical diagnosis and treatment plans must be confirmed by a qualified medical professional.
+          AI clinical decision support only. Final diagnosis and care pathways must be confirmed by a licensed ophthalmologist.
         </span>
       </div>
     </div>

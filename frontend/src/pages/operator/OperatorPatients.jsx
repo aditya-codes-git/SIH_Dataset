@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, User, FileUp, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Search, FileUp } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -7,13 +7,14 @@ import { Button } from '../../components/ui/Button';
 export const OperatorPatients = ({ screenings = [], onNavigateScreening }) => {
   const [search, setSearch] = useState('');
 
-  // Group screenings by patientId
+  // Group real screenings by patientId
   const patientMap = {};
   screenings.forEach((s) => {
     const pid = s.patientId || 'PATIENT-ANONYMOUS';
     if (!patientMap[pid]) {
       patientMap[pid] = {
         patientId: pid,
+        patientName: s.patientName || 'Anonymous Patient',
         screenings: [],
         latestScreening: s,
       };
@@ -22,50 +23,50 @@ export const OperatorPatients = ({ screenings = [], onNavigateScreening }) => {
   });
 
   const patientList = Object.values(patientMap).filter((p) =>
-    p.patientId.toLowerCase().includes(search.toLowerCase())
+    p.patientId.toLowerCase().includes(search.toLowerCase()) ||
+    p.patientName.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="animate-fade-in">
-      <Card>
-        <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
-          <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
+      {/* Search Bar */}
+      <Card style={{ padding: '0.75rem 1rem' }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '0.625rem', top: '50%', transform: 'translateY(-50%)' }} />
           <input
             type="text"
-            placeholder="Search patient registry by Patient ID..."
+            placeholder="Search patient registry by Patient ID or Name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.5rem 0.75rem 0.5rem 2.25rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-              fontSize: '0.875rem',
-              outline: 'none',
-            }}
+            className="clinical-input"
+            style={{ paddingLeft: '2rem' }}
           />
         </div>
       </Card>
 
-      <Card title="Screening Center Patient Registry" subtitle="Patient lookup for operational screening center">
-        <div style={{ overflowX: 'auto', marginTop: '0.5rem' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+      {/* Patient Table */}
+      <Card
+        title="Screening Center Patient Registry"
+        subtitle={`Total registered patients: ${patientList.length}`}
+        headerBorder={true}
+      >
+        <div style={{ overflowX: 'auto', margin: '0 -1.125rem -1rem -1.125rem' }}>
+          <table className="clinical-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                <th style={{ padding: '0.75rem 1rem' }}>Patient ID</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Total Submissions</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Latest Submission Date</th>
-                <th style={{ padding: '0.75rem 1rem' }}>Image Quality Status</th>
-                <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Action</th>
+              <tr>
+                <th>Patient ID</th>
+                <th>Patient Name</th>
+                <th>Submissions</th>
+                <th>Latest Screening Date</th>
+                <th>Latest Quality Status</th>
+                <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {patientList.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No patient records found matching query.
+                  <td colSpan={6} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No patient records found.
                   </td>
                 </tr>
               ) : (
@@ -74,29 +75,32 @@ export const OperatorPatients = ({ screenings = [], onNavigateScreening }) => {
                   const isUngradable = latest?.status === 'UNGRADABLE';
 
                   return (
-                    <tr key={p.patientId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <User size={16} color="var(--primary)" />
-                        <span>{p.patientId}</span>
+                    <tr key={p.patientId}>
+                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
+                        {p.patientId}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)' }}>
-                        {p.screenings.length} submission(s)
+                      <td style={{ color: 'var(--text-secondary)' }}>
+                        {p.patientName}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                        {latest?.createdAt ? new Date(latest.createdAt).toLocaleDateString() : 'N/A'}
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                        {p.screenings.length} record(s)
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem' }}>
+                      <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        {latest?.createdAt ? new Date(latest.createdAt).toLocaleDateString() : '—'}
+                      </td>
+
+                      <td>
                         {isUngradable ? (
-                          <Badge variant="warning">Recapture Required</Badge>
+                          <Badge variant="warning" size="sm">Recapture Required</Badge>
                         ) : (
-                          <Badge variant="success">Quality Passed</Badge>
+                          <Badge variant="success" size="sm">Quality Passed</Badge>
                         )}
                       </td>
 
-                      <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
+                      <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <Button
                           variant="primary"
                           size="sm"

@@ -3,34 +3,60 @@ import { Card } from '../ui/Card';
 
 export const StatCard = ({ title, value, subtitle, icon: Icon, color = 'var(--primary)' }) => {
   return (
-    <Card style={{ position: 'relative', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div>
-          <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
-            {title}
-          </span>
-          <h3 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0.25rem 0' }}>
-            {value}
-          </h3>
-          {subtitle && (
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {subtitle}
-            </span>
-          )}
-        </div>
-
-        <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: 'var(--radius-md)',
-          backgroundColor: 'var(--bg-secondary)',
-          color: color,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+    <Card style={{
+      padding: '0.875rem 1rem',
+      borderLeft: `3px solid ${color}`,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+        <span style={{
+          fontSize: '0.6875rem',
+          fontWeight: 600,
+          color: 'var(--text-secondary)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
         }}>
-          {Icon && <Icon size={20} />}
+          {title}
+        </span>
+        {Icon && (
+          <div style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: 'var(--radius-xs)',
+            backgroundColor: 'var(--bg-secondary)',
+            color: color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Icon size={14} />
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: '0.35rem' }}>
+        <div style={{
+          fontSize: '1.5rem',
+          fontWeight: 700,
+          color: 'var(--text-primary)',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.1,
+        }}>
+          {value}
         </div>
+        {subtitle && (
+          <span style={{
+            fontSize: '0.6875rem',
+            color: 'var(--text-muted)',
+            display: 'block',
+            marginTop: '0.2rem',
+          }}>
+            {subtitle}
+          </span>
+        )}
       </div>
     </Card>
   );
