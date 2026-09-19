@@ -1,16 +1,16 @@
 import React from 'react';
-import { ShieldCheck, Stethoscope, UserCheck } from 'lucide-react';
+import { ShieldCheck, Stethoscope, UserCheck, PanelLeftOpen } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../context/AuthContext';
 
-export const Header = ({ title, subtitle, dbConnected = true }) => {
+export const Header = ({ title, subtitle, dbConnected = true, isCollapsed, toggleSidebar }) => {
   const { role } = useAuth();
 
   return (
     <header style={{
       height: '56px',
       padding: '0 1.25rem',
-      backgroundColor: 'var(--bg-card)',
+      backgroundColor: 'var(--bg-header)',
       borderBottom: '1px solid var(--border-color)',
       display: 'flex',
       alignItems: 'center',
@@ -20,6 +20,30 @@ export const Header = ({ title, subtitle, dbConnected = true }) => {
       zIndex: 10,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* If collapsed, provide quick expand toggle button in header */}
+        {isCollapsed && (
+          <button
+            onClick={toggleSidebar}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: 'var(--radius-xs)',
+              backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'var(--transition)',
+            }}
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+          >
+            <PanelLeftOpen size={15} />
+          </button>
+        )}
+
         <div>
           <h2 style={{
             fontSize: '1rem',

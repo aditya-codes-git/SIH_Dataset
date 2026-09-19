@@ -26,14 +26,14 @@ export const ImageComparison = ({ originalUrl, gradcamUrl }) => {
         }}>
           <div style={{
             padding: '0.4rem 0.65rem',
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            color: '#FFFFFF',
+            backgroundColor: '#0D0D0D',
+            color: 'var(--text-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: '0.75rem',
             fontWeight: 600,
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            borderBottom: '1px solid var(--border-color)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <Eye size={13} color="var(--primary)" />
@@ -65,14 +65,14 @@ export const ImageComparison = ({ originalUrl, gradcamUrl }) => {
         }}>
           <div style={{
             padding: '0.4rem 0.65rem',
-            backgroundColor: 'rgba(15, 23, 42, 0.85)',
-            color: '#FFFFFF',
+            backgroundColor: '#0D0D0D',
+            color: 'var(--text-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             fontSize: '0.75rem',
             fontWeight: 600,
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            borderBottom: '1px solid var(--border-color)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <Flame size={13} color="#F59E0B" />

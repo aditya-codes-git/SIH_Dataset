@@ -130,9 +130,7 @@ export const Dashboard = ({ screenings = [], onNavigateScreening, onViewScreenin
                   const priority = s.triage?.priority || (s.drGrade === 4 ? 'URGENT' : s.drGrade === 3 ? 'HIGH' : 'MEDIUM');
 
                   return (
-                    <tr key={s.screeningId || s._id} style={{
-                      backgroundColor: priority === 'URGENT' ? 'rgba(220, 38, 38, 0.04)' : 'transparent',
-                    }}>
+                    <tr key={s.screeningId || s._id}>
                       <td>
                         <Badge variant={priority === 'URGENT' ? 'danger' : priority === 'HIGH' ? 'warning' : 'info'} size="sm">
                           {priority}

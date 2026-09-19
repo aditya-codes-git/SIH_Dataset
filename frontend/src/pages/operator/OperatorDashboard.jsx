@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileUp, ListTodo, Users } from 'lucide-react';
+import { FileUp, ListTodo, Users, RefreshCw } from 'lucide-react';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -128,9 +128,7 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
                   const priority = s.triage?.priority || 'ROUTINE';
 
                   return (
-                    <tr key={s.screeningId || s._id} style={{
-                      backgroundColor: isUngradable ? 'rgba(217, 119, 6, 0.03)' : isReferable ? 'rgba(220, 38, 38, 0.03)' : 'transparent',
-                    }}>
+                    <tr key={s.screeningId || s._id}>
                       <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
                         {s.patientId || 'PATIENT-ANONYMOUS'}
                       </td>
