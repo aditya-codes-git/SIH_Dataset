@@ -12,8 +12,8 @@ export const Screenings = ({ screenings = [], onViewScreening }) => {
     const textMatch = (s.patientId || '').toLowerCase().includes(search.toLowerCase()) ||
                       (s.screeningId || '').toLowerCase().includes(search.toLowerCase());
     if (!textMatch) return false;
-    if (gradeFilter === 'REFERABLE') return s.referable || s.drGrade >= 2;
-    if (gradeFilter === 'NON_REFERABLE') return s.status === 'GRADABLE' && !s.referable && (s.drGrade < 2);
+    if (gradeFilter === 'REFERABLE') return s.status === 'GRADABLE' && s.drGrade !== null && Number(s.drGrade) >= 2;
+    if (gradeFilter === 'NON_REFERABLE') return s.status === 'GRADABLE' && s.drGrade !== null && Number(s.drGrade) < 2;
     if (gradeFilter === 'UNGRADABLE') return s.status === 'UNGRADABLE';
     return true;
   });
@@ -91,7 +91,8 @@ export const Screenings = ({ screenings = [], onViewScreening }) => {
               ) : (
                 filtered.map((s) => {
                   const isUngradable = s.status === 'UNGRADABLE';
-                  const isReferable = s.referable || s.drGrade >= 2;
+                  const isReferable = s.status === 'GRADABLE' && s.drGrade !== null && Number(s.drGrade) >= 2;
+                  const isReviewed = Boolean(s.humanReview?.reviewed || s.triage?.status === 'REVIEWED');
 
                   return (
                     <tr key={s.screeningId || s._id}>
@@ -109,7 +110,7 @@ export const Screenings = ({ screenings = [], onViewScreening }) => {
                           <Badge variant="warning" size="sm">UNGRADABLE</Badge>
                         ) : (
                           <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
-                            Grade {s.drGrade ?? s.grade}
+                            Grade {s.drGrade}
                           </Badge>
                         )}
                       </td>
@@ -120,9 +121,16 @@ export const Screenings = ({ screenings = [], onViewScreening }) => {
                         {isUngradable ? (
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
                         ) : (
-                          <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
-                            {s.referral || (isReferable ? 'REFERABLE' : 'NON-REFERABLE')}
-                          </Badge>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                            <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
+                              {isReferable ? 'REFERABLE DR' : 'NON-REFERABLE'}
+                            </Badge>
+                            {isReferable && (
+                              <span style={{ fontSize: '0.6875rem', color: isReviewed ? 'var(--success)' : 'var(--warning)' }}>
+                                {isReviewed ? `Reviewed (${s.humanReview?.decision || 'Agreed'})` : 'Pending Doctor Review'}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>

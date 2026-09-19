@@ -14,10 +14,10 @@ const GRADE_LABELS = {
 export const ModelResultCard = ({ result }) => {
   if (!result || result.status === 'UNGRADABLE') return null;
 
-  const grade = result.drGrade ?? result.grade ?? 0;
+  const grade = result.drGrade != null ? Number(result.drGrade) : 0;
   const confidence = result.confidence != null ? `${(result.confidence * 100).toFixed(1)}%` : '—';
-  const isReferable = result.referable || grade >= 2 || result.triage?.referralRequired;
-  const referralText = result.referral || (isReferable ? 'REFERABLE DR (Grade ≥ 2)' : 'NON-REFERABLE DR');
+  const isReferable = grade >= 2;
+  const referralText = isReferable ? 'REFERABLE DR (Grade ≥ 2)' : 'NON-REFERABLE DR';
 
   return (
     <Card

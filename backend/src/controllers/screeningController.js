@@ -113,7 +113,8 @@ const createScreening = async (req, res, next) => {
 };
 
 /**
- * Returns list of screenings sanitized according to requesting user role
+ * Returns list of screenings sanitized according to requesting user role.
+ * Supports optional ?filter=pending_review or ?status=pending_review for backend-authoritative filtering.
  */
 const getScreenings = async (req, res, next) => {
   try {
@@ -128,8 +129,69 @@ const getScreenings = async (req, res, next) => {
       });
     }
 
-    const screenings = await Screening.find().sort({ createdAt: -1 });
+    const filterParam = req.query.filter || req.query.status;
+    let query = {};
+
+    if (filterParam === 'pending_review' || filterParam === 'pending') {
+      // Authoritative pending query: ONLY GRADABLE, canonical drGrade >= 2, unreviewed
+      query = {
+        status: 'GRADABLE',
+        drGrade: { $gte: 2 },
+        'humanReview.reviewed': { $ne: true },
+        'triage.status': { $nin: ['REVIEWED', 'COMPLETED'] },
+      };
+    }
+
+    const screenings = await Screening.find(query).sort({ createdAt: -1 });
     const sanitizedList = sanitizeScreeningsList(screenings, userRole);
+
+    res.json({
+      status: 'SUCCESS',
+      count: sanitizedList.length,
+      screenings: sanitizedList,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Returns ONLY eligible unreviewed referable cases for Doctor Pending Reviews queue.
+ * AUTHORITATIVE BACKEND RULE:
+ * - status === 'GRADABLE'
+ * - canonical drGrade >= 2
+ * - humanReview.reviewed is not true
+ * - triage.status is not 'REVIEWED' or 'COMPLETED'
+ *
+ * Grade 0, Grade 1, and UNGRADABLE records are strictly excluded at database query level.
+ */
+const getPendingReviews = async (req, res, next) => {
+  try {
+    const userRole = req.user?.role || 'doctor';
+    const dbStatus = getDBStatus();
+
+    if (!dbStatus.connected) {
+      return res.status(503).json({
+        status: 'FAILED',
+        error: 'Database is currently unavailable.',
+        dbStatus: 'UNAVAILABLE',
+      });
+    }
+
+    const query = {
+      status: 'GRADABLE',
+      drGrade: { $gte: 2 },
+      'humanReview.reviewed': { $ne: true },
+      'triage.status': { $nin: ['REVIEWED', 'COMPLETED'] },
+    };
+
+    // Urgency sort: Grade 4 (URGENT) > Grade 3 (HIGH) > Grade 2 (MEDIUM), then oldest first
+    const pendingScreenings = await Screening.find(query).sort({
+      drGrade: -1,
+      createdAt: 1,
+    });
+
+    const sanitizedList = sanitizeScreeningsList(pendingScreenings, userRole);
 
     res.json({
       status: 'SUCCESS',
@@ -179,5 +241,6 @@ const getScreeningById = async (req, res, next) => {
 module.exports = {
   createScreening,
   getScreenings,
+  getPendingReviews,
   getScreeningById,
 };

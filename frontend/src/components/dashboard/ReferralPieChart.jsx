@@ -3,8 +3,8 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 import { Card } from '../ui/Card';
 
 export const ReferralPieChart = ({ screenings = [], data }) => {
-  const nonReferableCount = screenings.filter((s) => s.status === 'GRADABLE' && !s.referable && (s.drGrade < 2 || s.grade < 2)).length;
-  const referableCount = screenings.filter((s) => s.status === 'GRADABLE' && (s.referable || s.drGrade >= 2 || s.grade >= 2)).length;
+  const nonReferableCount = screenings.filter((s) => s.status === 'GRADABLE' && Number(s.drGrade) < 2).length;
+  const referableCount = screenings.filter((s) => s.status === 'GRADABLE' && Number(s.drGrade) >= 2).length;
   const total = nonReferableCount + referableCount;
 
   const chartData = data || [

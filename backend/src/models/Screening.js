@@ -100,6 +100,8 @@ const screeningSchema = new mongoose.Schema(
       reviewer: { type: String, default: null },
       decision: { type: String, default: null },
       notes: { type: String, default: null },
+      clinicalFindings: { type: String, default: null },
+      recommendations: { type: String, default: null },
       reviewedAt: { type: Date, default: null },
     },
   },

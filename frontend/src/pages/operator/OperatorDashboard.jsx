@@ -1,16 +1,40 @@
 import React from 'react';
-import { FileUp, ListTodo, Users, RefreshCw } from 'lucide-react';
+import { FileUp, ListTodo, Users, RefreshCw, Eye } from 'lucide-react';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { getReviewStatus, getReferralRouting, sortScreeningsByDate } from '../../utils/clinicalStatus';
 
-export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavigateQueue, onNavigatePatients }) => {
+export const OperatorDashboard = ({ 
+  screenings = [], 
+  onNavigateScreening, 
+  onNavigateQueue, 
+  onNavigatePatients,
+  onViewScreening,
+  onRecapture 
+}) => {
   const totalScreened = screenings.length;
   const recapturedCount = screenings.filter((s) => s.status === 'UNGRADABLE').length;
-  const routineCount = screenings.filter((s) => s.status === 'GRADABLE' && (!s.triage?.referralRequired && (s.drGrade === 0 || s.drGrade === 1))).length;
-  const referableCount = screenings.filter((s) => s.status === 'GRADABLE' && (s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2)).length;
-  const pendingReviewCount = screenings.filter((s) => s.status === 'GRADABLE' && (s.triage?.referralRequired || s.drGrade >= 2) && !s.humanReview?.reviewed).length;
+  const routineCount = screenings.filter((s) => s.status === 'GRADABLE' && s.drGrade !== null && Number(s.drGrade) < 2).length;
+  const referableCount = screenings.filter((s) => s.status === 'GRADABLE' && s.drGrade !== null && Number(s.drGrade) >= 2).length;
+  const pendingReviewCount = screenings.filter((s) => 
+    s.status === 'GRADABLE' && 
+    s.drGrade !== null && 
+    Number(s.drGrade) >= 2 && 
+    !s.humanReview?.reviewed && 
+    s.triage?.status !== 'REVIEWED' && 
+    s.triage?.status !== 'COMPLETED'
+  ).length;
+  const reviewedCount = screenings.filter((s) => 
+    s.status === 'GRADABLE' && 
+    s.drGrade !== null && 
+    Number(s.drGrade) >= 2 && 
+    (s.humanReview?.reviewed || s.triage?.status === 'REVIEWED')
+  ).length;
+
+  // Deterministic newest-first sort using actual timestamp
+  const sorted = sortScreeningsByDate(screenings);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
@@ -44,7 +68,7 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
             New Screening
           </Button>
           <Button variant="secondary" icon={ListTodo} onClick={onNavigateQueue}>
-            Queue
+            Full Queue
           </Button>
           <Button variant="secondary" icon={Users} onClick={onNavigatePatients}>
             Patients
@@ -69,6 +93,12 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
           value={pendingReviewCount}
           subtitle="Awaiting clinician sign-off"
           color="var(--warning)"
+        />
+        <StatCard
+          title="Clinician Reviewed"
+          value={reviewedCount}
+          subtitle="Assessments completed"
+          color="var(--success)"
         />
         <StatCard
           title="Referable Cases"
@@ -96,49 +126,63 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
         subtitle="Live queue of processed field screenings with quality gates and routing actions"
         headerBorder={true}
         action={
-          <span style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)' }}>
-            Showing {Math.min(screenings.length, 10)} of {screenings.length} records
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)' }}>
+              Showing {Math.min(sorted.length, 10)} of {sorted.length} records
+            </span>
+            <Button variant="secondary" size="xs" onClick={onNavigateQueue}>
+              View All ({sorted.length})
+            </Button>
+          </div>
         }
       >
         <div style={{ overflowX: 'auto', margin: '0 -1.125rem -1rem -1.125rem' }}>
           <table className="clinical-table">
             <thead>
               <tr>
-                <th>Patient ID</th>
-                <th>Patient Name</th>
-                <th>Time</th>
+                <th>Screening ID</th>
+                <th>Patient</th>
+                <th>Date / Time</th>
                 <th>Image Quality</th>
-                <th>DR Grade</th>
-                <th>Referral Status</th>
-                <th style={{ textAlign: 'right' }}>Routing Action</th>
+                <th>AI DR Grade</th>
+                <th>Referral Routing</th>
+                <th>Review Status</th>
+                <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
             <tbody>
-              {screenings.length === 0 ? (
+              {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan={8} style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     No screenings in queue. Click "New Screening" to register a patient and upload fundus images.
                   </td>
                 </tr>
               ) : (
-                screenings.slice(0, 10).map((s) => {
+                sorted.slice(0, 10).map((s) => {
                   const isUngradable = s.status === 'UNGRADABLE';
-                  const isReferable = s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2;
-                  const priority = s.triage?.priority || 'ROUTINE';
+                  const isReferable = s.status === 'GRADABLE' && s.drGrade !== null && Number(s.drGrade) >= 2;
+                  const referralInfo = getReferralRouting(s);
+                  const reviewInfo = getReviewStatus(s);
 
                   return (
                     <tr key={s.screeningId || s._id}>
-                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
-                        {s.patientId || 'PATIENT-ANONYMOUS'}
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }} className="font-mono">
+                        {s.screeningId ? s.screeningId.slice(0, 10) : '—'}
                       </td>
 
-                      <td style={{ color: 'var(--text-secondary)' }}>
-                        {s.patientName || 'Anonymous Patient'}
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600, color: 'var(--text-primary)' }} className="font-mono">
+                            {s.patientId || 'PATIENT-ANONYMOUS'}
+                          </span>
+                          <span style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)' }}>
+                            {s.patientName || 'Anonymous Patient'}
+                          </span>
+                        </div>
                       </td>
 
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                        {s.createdAt ? new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        {s.createdAt ? new Date(s.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '—'}
                       </td>
 
                       <td>
@@ -151,10 +195,10 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
 
                       <td>
                         {isUngradable ? (
-                          <span style={{ color: 'var(--warning)', fontSize: '0.75rem' }}>IQA Failed</span>
+                          <span style={{ color: 'var(--warning)', fontSize: '0.75rem', fontWeight: 500 }}>IQA Failed</span>
                         ) : (
                           <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
-                            Grade {s.drGrade ?? s.grade ?? 0}
+                            Grade {s.drGrade}
                           </Badge>
                         )}
                       </td>
@@ -162,23 +206,37 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
                       <td>
                         {isUngradable ? (
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>—</span>
-                        ) : isReferable ? (
-                          <Badge variant={priority === 'URGENT' ? 'danger' : 'warning'} size="sm">
-                            Specialist Review ({priority})
-                          </Badge>
                         ) : (
-                          <Badge variant="success" size="sm">Routine Follow-up</Badge>
+                          <Badge variant={referralInfo.variant} size="sm">
+                            {referralInfo.label}
+                          </Badge>
                         )}
+                      </td>
+
+                      <td>
+                        <Badge variant={reviewInfo.variant} size="sm">
+                          {reviewInfo.label}
+                        </Badge>
                       </td>
 
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {isUngradable ? (
-                          <Button variant="outline" size="sm" icon={RefreshCw} onClick={onNavigateScreening}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            icon={RefreshCw} 
+                            onClick={() => onRecapture ? onRecapture(s) : onNavigateScreening()}
+                          >
                             Recapture
                           </Button>
                         ) : (
-                          <Button variant="secondary" size="sm" icon={ListTodo} onClick={onNavigateQueue}>
-                            View Queue
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            icon={Eye} 
+                            onClick={() => onViewScreening ? onViewScreening(s) : onNavigateQueue()}
+                          >
+                            View
                           </Button>
                         )}
                       </td>
@@ -193,3 +251,5 @@ export const OperatorDashboard = ({ screenings = [], onNavigateScreening, onNavi
     </div>
   );
 };
+
+export default OperatorDashboard;

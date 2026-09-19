@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -10,26 +10,81 @@ import { ClinicalReviewForm } from '../../components/review/ClinicalReviewForm';
 import { AIAssistantPanel } from '../../components/assistant/AIAssistantPanel';
 import { ReportViewer } from '../../components/report/ReportViewer';
 import { api } from '../../services/api';
+import { getReviewStatus, getReferralRouting } from '../../utils/clinicalStatus';
 
-export const ScreeningResult = ({ result, onBack, onNewScreening: _onNewScreening }) => {
+export const ScreeningResult = ({ 
+  result, 
+  onBack, 
+  onReviewSubmitted, 
+  onNewScreening: _onNewScreening,
+  isOperator = false,
+  onRecapture 
+}) => {
   const [activeTab, setActiveTab] = useState('clinical'); // 'clinical' | 'report' | 'assistant'
   const [currentResult, setCurrentResult] = useState(result);
+  const [loading, setLoading] = useState(!result);
+  const [error, setError] = useState(null);
 
-  if (!currentResult) {
+  // Auto-restore / refetch from backend if refreshed or result prop is initially null
+  useEffect(() => {
+    if (result) {
+      setCurrentResult(result);
+      setLoading(false);
+      return;
+    }
+
+    const savedId = localStorage.getItem('retinoscan_active_screening_id');
+    if (savedId) {
+      setLoading(true);
+      setError(null);
+      api.getScreeningById(savedId)
+        .then((data) => {
+          const item = data.screening || data;
+          if (item && item.screeningId) {
+            setCurrentResult(item);
+          } else {
+            setError('Screening record not found.');
+          }
+        })
+        .catch((err) => {
+          setError(err.message || 'Failed to fetch screening record from database.');
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [result]);
+
+  if (loading) {
+    return (
+      <Card style={{ textAlign: 'center', padding: '3rem' }}>
+        <RefreshCw size={24} className="animate-spin" color="var(--primary)" style={{ margin: '0 auto 0.75rem auto' }} />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Loading screening record from database...</p>
+      </Card>
+    );
+  }
+
+  if (error || !currentResult) {
     return (
       <Card style={{ textAlign: 'center', padding: '2.5rem' }}>
-        <p style={{ color: 'var(--text-secondary)' }}>No screening selected.</p>
-        <Button onClick={onBack} style={{ marginTop: '0.5rem' }}>Return to Dashboard</Button>
+        <p style={{ color: 'var(--danger)', fontWeight: 500 }}>{error || 'No screening selected.'}</p>
+        <Button onClick={onBack} icon={ArrowLeft} style={{ marginTop: '0.75rem' }}>
+          Return to Queue
+        </Button>
       </Card>
     );
   }
 
   const isUngradable = currentResult.status === 'UNGRADABLE';
-  const isReferable = currentResult.triage?.referralRequired || currentResult.referable || currentResult.drGrade >= 2;
-  const priority = currentResult.triage?.priority || 'ROUTINE';
+  const isReferable = currentResult.status === 'GRADABLE' && currentResult.drGrade !== null && Number(currentResult.drGrade) >= 2;
+  const referralInfo = getReferralRouting(currentResult);
+  const reviewInfo = getReviewStatus(currentResult);
 
   const handleReviewSubmitted = (updatedScreening) => {
     setCurrentResult(updatedScreening);
+    if (onReviewSubmitted) {
+      onReviewSubmitted(updatedScreening);
+    }
   };
 
   return (
@@ -48,31 +103,28 @@ export const ScreeningResult = ({ result, onBack, onNewScreening: _onNewScreenin
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <Button variant="secondary" size="sm" icon={ArrowLeft} onClick={onBack}>
-            Back
+            {isOperator ? 'Back to Queue' : 'Back to Dashboard'}
           </Button>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }} className="font-mono">
                 {currentResult.patientId || 'PATIENT-ANONYMOUS'}
               </h2>
-              <Badge variant={isUngradable ? 'warning' : isReferable ? 'danger' : 'success'} size="sm">
-                {isUngradable ? 'UNGRADABLE' : isReferable ? `REFERABLE — ${priority}` : 'LOW RISK'}
+              <Badge variant={isUngradable ? 'warning' : isReferable ? 'danger' : 'success'}>
+                {isUngradable ? 'UNGRADABLE' : `Grade ${currentResult.drGrade}`}
               </Badge>
-              <Badge variant="info" size="sm">
-                <ShieldCheck size={11} /> AI Decision Support
+              <Badge variant={reviewInfo.variant}>
+                {reviewInfo.label}
               </Badge>
             </div>
-            <p style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)', margin: 0, marginTop: '1px' }}>
-              Name: {currentResult.patientName || 'Anonymous'}
-              {currentResult.age != null && ` | Age: ${currentResult.age}`}
-              {currentResult.gender && currentResult.gender !== 'Unspecified' && ` | Sex: ${currentResult.gender}`}
-              {currentResult.diabetesDuration && ` | Diabetes: ${currentResult.diabetesDuration}`}
-              {currentResult.contactLocation && ` | Location: ${currentResult.contactLocation}`}
+            <p style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)', margin: 0, marginTop: '0.15rem' }}>
+              Patient: {currentResult.patientName || 'Anonymous'} | Screening ID: <span className="font-mono">{currentResult.screeningId}</span>
+              {currentResult.createdAt && ` | ${new Date(currentResult.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}`}
             </p>
           </div>
         </div>
 
-        {/* View Switcher Tabs */}
+        {/* View Tabs */}
         <div style={{
           display: 'flex',
           gap: '0.25rem',
@@ -95,7 +147,7 @@ export const ScreeningResult = ({ result, onBack, onNewScreening: _onNewScreenin
               transition: 'var(--transition)',
             }}
           >
-            Clinical Review
+            {isOperator ? 'Screening Details' : 'Clinical Review'}
           </button>
           <button
             onClick={() => setActiveTab('report')}
@@ -113,26 +165,28 @@ export const ScreeningResult = ({ result, onBack, onNewScreening: _onNewScreenin
           >
             Digital Report
           </button>
-          <button
-            onClick={() => setActiveTab('assistant')}
-            style={{
-              padding: '0.3rem 0.65rem',
-              borderRadius: 'var(--radius-xs)',
-              border: activeTab === 'assistant' ? '1px solid var(--border-color)' : '1px solid transparent',
-              backgroundColor: activeTab === 'assistant' ? 'var(--bg-card)' : 'transparent',
-              color: activeTab === 'assistant' ? 'var(--primary)' : 'var(--text-secondary)',
-              fontSize: '0.75rem',
-              fontWeight: activeTab === 'assistant' ? 600 : 400,
-              cursor: 'pointer',
-              transition: 'var(--transition)',
-            }}
-          >
-            AI Screening Assistant
-          </button>
+          {!isOperator && (
+            <button
+              onClick={() => setActiveTab('assistant')}
+              style={{
+                padding: '0.3rem 0.65rem',
+                borderRadius: 'var(--radius-xs)',
+                border: activeTab === 'assistant' ? '1px solid var(--border-color)' : '1px solid transparent',
+                backgroundColor: activeTab === 'assistant' ? 'var(--bg-card)' : 'transparent',
+                color: activeTab === 'assistant' ? 'var(--primary)' : 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                fontWeight: activeTab === 'assistant' ? 600 : 400,
+                cursor: 'pointer',
+                transition: 'var(--transition)',
+              }}
+            >
+              AI Screening Assistant
+            </button>
+          )}
         </div>
       </div>
 
-      {/* VIEW TAB 1: CLINICAL REVIEW */}
+      {/* VIEW TAB 1: CLINICAL DETAILS / REVIEW */}
       {activeTab === 'clinical' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Top Row: AI Model Result + Quality Gate Card */}
@@ -149,7 +203,87 @@ export const ScreeningResult = ({ result, onBack, onNewScreening: _onNewScreenin
 
           {/* Clinical Review Form & Summary */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
-            <ClinicalReviewForm screening={currentResult} onReviewUpdated={handleReviewSubmitted} />
+            {isOperator ? (
+              <Card
+                title="Clinician Assessment Status"
+                subtitle="Independent ophthalmologist review and audit determination"
+                headerBorder={true}
+                action={
+                  <Badge variant={reviewInfo.variant}>
+                    {reviewInfo.label}
+                  </Badge>
+                }
+              >
+                <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-xs)', backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                  {reviewInfo.code === 'REVIEWED' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Badge variant="success" size="sm">Assessment Completed</Badge>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          Decision: {currentResult.humanReview?.decision || 'Agreed'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                        <strong>Reviewing Clinician:</strong> {currentResult.humanReview?.reviewer || 'Assigned Ophthalmologist'}
+                      </p>
+                      {currentResult.humanReview?.reviewedAt && (
+                        <p style={{ fontSize: '0.71875rem', color: 'var(--text-muted)', margin: 0 }}>
+                          <strong>Reviewed At:</strong> {new Date(currentResult.humanReview.reviewedAt).toLocaleString()}
+                        </p>
+                      )}
+                      {currentResult.humanReview?.clinicalFindings && (
+                        <div style={{ marginTop: '0.25rem', padding: '0.5rem', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-color)' }}>
+                          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Clinical Findings</span>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-primary)', margin: '0.15rem 0 0 0' }}>
+                            {currentResult.humanReview.clinicalFindings}
+                          </p>
+                        </div>
+                      )}
+                      {currentResult.humanReview?.notes && (
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                          <strong>Notes:</strong> {currentResult.humanReview.notes}
+                        </p>
+                      )}
+                    </div>
+                  ) : reviewInfo.code === 'RECAPTURE' ? (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--warning)', marginBottom: '0.4rem' }}>
+                        <AlertTriangle size={15} />
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>Image Quality Check Failed</span>
+                      </div>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem 0' }}>
+                        The retinal fundus image did not pass quality verification ({currentResult.quality?.reason || 'low focus / illumination'}). Recapture is required.
+                      </p>
+                      {onRecapture && (
+                        <Button variant="outline" size="sm" icon={RefreshCw} onClick={() => onRecapture(currentResult)}>
+                          Initiate Recapture
+                        </Button>
+                      )}
+                    </div>
+                  ) : reviewInfo.code === 'NOT_REQUIRED' ? (
+                    <div>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--success)' }}>
+                        Routine Community Follow-up
+                      </span>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+                        Non-referable screening result (Grade 0–1). Specialist review is not required. Annual re-screening recommended.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--warning)' }}>
+                        Awaiting Specialist Evaluation
+                      </span>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
+                        This referable case (Grade {currentResult.drGrade}) has been placed in the ophthalmologist review queue.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ) : (
+              <ClinicalReviewForm screening={currentResult} onReviewUpdated={handleReviewSubmitted} />
+            )}
 
             <Card
               title="Patient Screening Context"
@@ -163,7 +297,10 @@ export const ScreeningResult = ({ result, onBack, onNewScreening: _onNewScreenin
                     <Badge variant={isReferable ? 'danger' : 'success'} size="sm">Grade {currentResult.drGrade ?? '—'}</Badge>
                   </div>
                   <p style={{ fontSize: '0.71875rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0 0' }}>
-                    Recommendation: {currentResult.triage?.recommendation || (isReferable ? 'Referred for specialist ophthalmologist review.' : 'Routine annual screening.')}
+                    Routing: {referralInfo.label}
+                  </p>
+                  <p style={{ fontSize: '0.71875rem', color: 'var(--text-muted)', margin: '0.15rem 0 0 0' }}>
+                    Location: {currentResult.contactLocation || 'Rural Health Screening Camp'}
                   </p>
                 </div>
               </div>
@@ -177,8 +314,8 @@ export const ScreeningResult = ({ result, onBack, onNewScreening: _onNewScreenin
         <ReportViewer screening={currentResult} onBack={() => setActiveTab('clinical')} />
       )}
 
-      {/* VIEW TAB 3: AI ASSISTANT */}
-      {activeTab === 'assistant' && (
+      {/* VIEW TAB 3: AI ASSISTANT (Doctor only) */}
+      {!isOperator && activeTab === 'assistant' && (
         <AIAssistantPanel screening={currentResult} screeningId={currentResult.screeningId} />
       )}
     </div>

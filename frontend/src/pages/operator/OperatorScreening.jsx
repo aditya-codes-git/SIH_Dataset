@@ -17,15 +17,27 @@ import { Badge } from '../../components/ui/Badge';
 import { api } from '../../services/api';
 import { ReportViewer } from '../../components/report/ReportViewer';
 
-export const OperatorScreening = ({ onComplete }) => {
+export const OperatorScreening = ({ onComplete, initialScreening = null }) => {
   // Clinical Stepper: 1. Registration, 2. Fundus Capture, 3. Quality & Screening Result, 4. Report
-  const [step, setStep] = useState(1);
-  const [patientId, setPatientId] = useState('');
-  const [patientName, setPatientName] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('Unspecified');
-  const [diabetesDuration, setDiabetesDuration] = useState('');
-  const [contactLocation, setContactLocation] = useState('');
+  const [step, setStep] = useState(initialScreening ? 2 : 1);
+  const [patientId, setPatientId] = useState(initialScreening?.patientId || '');
+  const [patientName, setPatientName] = useState(initialScreening?.patientName || '');
+  const [age, setAge] = useState(initialScreening?.age || '');
+  const [gender, setGender] = useState(initialScreening?.gender || 'Unspecified');
+  const [diabetesDuration, setDiabetesDuration] = useState(initialScreening?.diabetesDuration || '');
+  const [contactLocation, setContactLocation] = useState(initialScreening?.contactLocation || '');
+
+  React.useEffect(() => {
+    if (initialScreening) {
+      setStep(2);
+      setPatientId(initialScreening.patientId || '');
+      setPatientName(initialScreening.patientName || '');
+      setAge(initialScreening.age || '');
+      setGender(initialScreening.gender || 'Unspecified');
+      setDiabetesDuration(initialScreening.diabetesDuration || '');
+      setContactLocation(initialScreening.contactLocation || '');
+    }
+  }, [initialScreening]);
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -76,6 +88,9 @@ export const OperatorScreening = ({ onComplete }) => {
         setStep(3); // Step 3: Quality Check Failed
       } else {
         setStep(4); // Step 4: AI Screening & Routing Decision
+      }
+      if (onComplete) {
+        onComplete(res);
       }
     } catch (err) {
       setError(err.message || 'Screening execution encountered an error. Please check engine connection.');

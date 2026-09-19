@@ -65,7 +65,8 @@ export const PatientDetails = ({ patient, onBack, onViewScreening }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', marginTop: '0.5rem' }}>
           {patient.screenings.map((s, idx) => {
             const isUngradable = s.status === 'UNGRADABLE';
-            const referable = s.referable || s.drGrade >= 2;
+            const referable = s.status === 'GRADABLE' && s.drGrade !== null && Number(s.drGrade) >= 2;
+            const isReviewed = Boolean(s.humanReview?.reviewed || s.triage?.status === 'REVIEWED');
 
             return (
               <div
@@ -100,11 +101,16 @@ export const PatientDetails = ({ patient, onBack, onViewScreening }) => {
                   ) : (
                     <>
                       <Badge variant={referable ? 'danger' : 'success'} size="sm">
-                        Grade {s.drGrade ?? s.grade}
+                        Grade {s.drGrade}
                       </Badge>
                       <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }} className="font-mono">
                         {s.confidence != null ? `${(s.confidence * 100).toFixed(1)}%` : '—'}
                       </span>
+                      {referable && (
+                        <Badge variant={isReviewed ? 'success' : 'warning'} size="sm">
+                          {isReviewed ? `Reviewed: ${s.humanReview?.decision || 'Completed'}` : 'Pending Doctor'}
+                        </Badge>
+                      )}
                     </>
                   )}
 

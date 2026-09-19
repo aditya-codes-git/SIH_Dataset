@@ -58,6 +58,13 @@ export const api = {
     return data;
   },
 
+  getPendingReviews: async (role = null) => {
+    const res = await fetch(`${BASE_URL}/screenings/pending-reviews`, { headers: getHeaders({}, role || 'doctor') });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch pending reviews');
+    return data;
+  },
+
   submitReview: async (id, reviewData, role = null) => {
     const res = await fetch(`${BASE_URL}/screenings/${id}/review`, {
       method: 'POST',

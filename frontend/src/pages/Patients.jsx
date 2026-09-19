@@ -27,8 +27,8 @@ export const Patients = ({ screenings = [], onSelectPatient }) => {
     const pidMatch = p.patientId.toLowerCase().includes(search.toLowerCase()) ||
                      p.patientName.toLowerCase().includes(search.toLowerCase());
     if (!pidMatch) return false;
-    if (filter === 'REFERABLE') return p.latestScreening?.referable || p.latestScreening?.drGrade >= 2;
-    if (filter === 'NON_REFERABLE') return p.latestScreening && !p.latestScreening.referable && p.latestScreening.status !== 'UNGRADABLE' && p.latestScreening.drGrade < 2;
+    if (filter === 'REFERABLE') return p.latestScreening && p.latestScreening.status !== 'UNGRADABLE' && Number(p.latestScreening.drGrade) >= 2;
+    if (filter === 'NON_REFERABLE') return p.latestScreening && p.latestScreening.status !== 'UNGRADABLE' && Number(p.latestScreening.drGrade) < 2;
     if (filter === 'UNGRADABLE') return p.latestScreening?.status === 'UNGRADABLE';
     return true;
   });
@@ -107,7 +107,7 @@ export const Patients = ({ screenings = [], onSelectPatient }) => {
                 patientList.map((p) => {
                   const s = p.latestScreening;
                   const isUngradable = s.status === 'UNGRADABLE';
-                  const isReferable = s.referable || s.drGrade >= 2;
+                  const isReferable = !isUngradable && Number(s.drGrade) >= 2;
 
                   return (
                     <tr key={p.patientId}>
@@ -128,7 +128,7 @@ export const Patients = ({ screenings = [], onSelectPatient }) => {
                           <Badge variant="warning" size="sm">UNGRADABLE</Badge>
                         ) : (
                           <Badge variant={isReferable ? 'danger' : 'success'} size="sm">
-                            Grade {s.drGrade ?? s.grade}
+                            Grade {s.drGrade != null ? s.drGrade : '—'}
                           </Badge>
                         )}
                       </td>

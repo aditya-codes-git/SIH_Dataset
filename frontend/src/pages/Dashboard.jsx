@@ -9,19 +9,39 @@ import { Badge } from '../components/ui/Badge';
 
 export const Dashboard = ({ screenings = [], onNavigateScreening, onViewScreening }) => {
   const totalScreenings = screenings.length;
-  const referableCases = screenings.filter((s) => s.status === 'GRADABLE' && (s.triage?.referralRequired || s.referable || s.drGrade >= 2 || s.grade >= 2)).length;
-  const pendingReviews = screenings.filter((s) => !s.humanReview?.reviewed && (s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2)).length;
-  const reviewedTotal = screenings.filter((s) => s.humanReview?.reviewed).length;
+  const referableCases = screenings.filter((s) => s.status === 'GRADABLE' && s.drGrade !== null && s.drGrade !== undefined && Number(s.drGrade) >= 2).length;
+  const pendingReviews = screenings.filter((s) => 
+    s.status === 'GRADABLE' &&
+    s.drGrade !== null &&
+    s.drGrade !== undefined &&
+    Number(s.drGrade) >= 2 &&
+    !s.humanReview?.reviewed &&
+    s.triage?.status !== 'REVIEWED' &&
+    s.triage?.status !== 'COMPLETED'
+  ).length;
+  const reviewedTotal = screenings.filter((s) => 
+    s.status === 'GRADABLE' &&
+    s.drGrade >= 2 &&
+    (s.humanReview?.reviewed || s.triage?.status === 'REVIEWED')
+  ).length;
   const recapturedCount = screenings.filter((s) => s.status === 'UNGRADABLE').length;
 
   const priorityRank = { URGENT: 3, HIGH: 2, MEDIUM: 1, ROUTINE: 0 };
   const pendingQueue = screenings
-    .filter((s) => !s.humanReview?.reviewed && (s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2))
+    .filter((s) => 
+      s.status === 'GRADABLE' &&
+      s.drGrade !== null &&
+      s.drGrade !== undefined &&
+      Number(s.drGrade) >= 2 &&
+      !s.humanReview?.reviewed &&
+      s.triage?.status !== 'REVIEWED' &&
+      s.triage?.status !== 'COMPLETED'
+    )
     .sort((a, b) => {
-      const pA = priorityRank[a.triage?.priority] || (a.drGrade === 4 ? 3 : a.drGrade === 3 ? 2 : a.drGrade === 2 ? 1 : 0);
-      const pB = priorityRank[b.triage?.priority] || (b.drGrade === 4 ? 3 : b.drGrade === 3 ? 2 : b.drGrade === 2 ? 1 : 0);
+      const pA = priorityRank[a.triage?.priority] || (a.drGrade === 4 ? 3 : a.drGrade === 3 ? 2 : 1);
+      const pB = priorityRank[b.triage?.priority] || (b.drGrade === 4 ? 3 : b.drGrade === 3 ? 2 : 1);
       if (pB !== pA) return pB - pA;
-      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
     });
 
   return (

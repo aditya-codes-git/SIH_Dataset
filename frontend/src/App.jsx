@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { Layout } from './components/layout/Layout';
@@ -11,7 +11,7 @@ import { OperatorPatients } from './pages/operator/OperatorPatients';
 
 // Doctor Pages
 import { Dashboard as DoctorDashboard } from './pages/Dashboard';
-import { ScreeningResult as DoctorScreeningResult } from './pages/ScreeningResult';
+import { ScreeningResult as DoctorScreeningResult } from './pages/doctor/DoctorScreeningResult';
 import { Screenings as DoctorScreenings } from './pages/Screenings';
 import { DoctorPendingReviews } from './pages/doctor/DoctorPendingReviews';
 import { Patients as DoctorPatients } from './pages/Patients';
@@ -22,14 +22,25 @@ import { api } from './services/api';
 
 export function AppContent() {
   const { role } = useAuth();
-  const [currentTab, setCurrentTab] = useState(role === 'operator' ? 'operator-dashboard' : 'doctor-dashboard');
+
+  // Initialize currentTab from localStorage if valid for role, else default to dashboard
+  const [currentTab, setCurrentTab] = useState(() => {
+    const saved = localStorage.getItem('retinoscan_active_tab');
+    if (saved) {
+      if (role === 'operator' && saved.startsWith('operator-')) return saved;
+      if (role === 'doctor' && saved.startsWith('doctor-')) return saved;
+    }
+    return role === 'operator' ? 'operator-dashboard' : 'doctor-dashboard';
+  });
+
   const [screenings, setScreenings] = useState([]);
   const [activeResult, setActiveResult] = useState(null);
   const [activePatient, setActivePatient] = useState(null);
+  const [recaptureScreening, setRecaptureScreening] = useState(null);
   const [dbConnected, setDbConnected] = useState(true);
 
   // Load screenings from backend using active role credentials
-  const loadScreenings = async () => {
+  const loadScreenings = useCallback(async () => {
     try {
       const data = await api.getScreenings(role);
       if (data.screenings) {
@@ -40,13 +51,20 @@ export function AppContent() {
       console.warn('Backend / MongoDB status:', err.message);
       setDbConnected(false);
     }
-  };
+  }, [role]);
 
   useEffect(() => {
     loadScreenings();
-  }, [role]);
+  }, [loadScreenings]);
 
-  // Enforce role-protected routes & redirects!
+  // Persist currentTab whenever it changes
+  useEffect(() => {
+    if (currentTab) {
+      localStorage.setItem('retinoscan_active_tab', currentTab);
+    }
+  }, [currentTab]);
+
+  // Enforce role-protected routes & redirects on role change
   useEffect(() => {
     if (role === 'operator' && !currentTab.startsWith('operator-')) {
       setCurrentTab('operator-dashboard');
@@ -55,11 +73,54 @@ export function AppContent() {
     }
   }, [role]);
 
-  const handleViewScreening = (screeningRecord) => {
-    if (role === 'doctor') {
-      setActiveResult(screeningRecord);
-      setCurrentTab('doctor-screening-result');
+  // Auto-restore active screening record from database if refreshed on detail tab
+  useEffect(() => {
+    const savedScreeningId = localStorage.getItem('retinoscan_active_screening_id');
+    const isDetailTab = currentTab === 'operator-screening-result' || currentTab === 'doctor-screening-result';
+
+    if (isDetailTab && savedScreeningId && !activeResult) {
+      api.getScreeningById(savedScreeningId, role)
+        .then((res) => {
+          const item = res.screening || res;
+          if (item && item.screeningId) {
+            setActiveResult(item);
+          }
+        })
+        .catch((err) => {
+          console.warn('Could not auto-restore screening record on reload:', err.message);
+        });
     }
+  }, [currentTab, role, activeResult]);
+
+  const handleViewScreening = async (screeningOrId) => {
+    const id = typeof screeningOrId === 'string' ? screeningOrId : screeningOrId?.screeningId;
+    if (!id) return;
+
+    // Persist ID in localStorage for browser refresh persistence
+    localStorage.setItem('retinoscan_active_screening_id', id);
+
+    try {
+      const res = await api.getScreeningById(id, role);
+      const record = res.screening || res;
+      setActiveResult(record);
+
+      if (role === 'operator') {
+        setCurrentTab('operator-screening-result');
+      } else {
+        setCurrentTab('doctor-screening-result');
+      }
+    } catch (err) {
+      console.error('Failed to load screening details:', err);
+      if (typeof screeningOrId === 'object' && screeningOrId !== null) {
+        setActiveResult(screeningOrId);
+        setCurrentTab(role === 'operator' ? 'operator-screening-result' : 'doctor-screening-result');
+      }
+    }
+  };
+
+  const handleRecapture = (screeningRecord) => {
+    setRecaptureScreening(screeningRecord);
+    setCurrentTab('operator-screening');
   };
 
   const handleSelectPatient = (patientRecord) => {
@@ -77,9 +138,11 @@ export function AppContent() {
         case 'operator-screening':
           return { title: 'New Patient Screening', subtitle: 'Upload fundus image & perform operational IQA' };
         case 'operator-queue':
-          return { title: 'Screening Center Queue', subtitle: 'Track submitted screenings (No diagnostic data)' };
+          return { title: 'Screening Center Queue', subtitle: 'Track submitted screenings (Complete operational registry)' };
         case 'operator-patients':
           return { title: 'Patient Lookup', subtitle: 'Screening center patient registry' };
+        case 'operator-screening-result':
+          return { title: 'Screening Details & Diagnostics', subtitle: `ID: ${activeResult?.screeningId || 'Details'}` };
         default:
           return { title: 'Screening Center', subtitle: 'Operator Specialist' };
       }
@@ -121,27 +184,63 @@ export function AppContent() {
           {currentTab === 'operator-dashboard' && (
             <OperatorDashboard
               screenings={screenings}
-              onNavigateScreening={() => setCurrentTab('operator-screening')}
+              onNavigateScreening={() => {
+                setRecaptureScreening(null);
+                setCurrentTab('operator-screening');
+              }}
               onNavigateQueue={() => setCurrentTab('operator-queue')}
               onNavigatePatients={() => setCurrentTab('operator-patients')}
+              onViewScreening={handleViewScreening}
+              onRecapture={handleRecapture}
             />
           )}
 
           {currentTab === 'operator-screening' && (
-            <OperatorScreening onComplete={loadScreenings} />
+            <OperatorScreening 
+              initialScreening={recaptureScreening}
+              onComplete={async () => {
+                setRecaptureScreening(null);
+                await loadScreenings();
+              }} 
+            />
           )}
 
           {currentTab === 'operator-queue' && (
             <OperatorQueue
               screenings={screenings}
-              onNavigateScreening={() => setCurrentTab('operator-screening')}
+              onNavigateScreening={() => {
+                setRecaptureScreening(null);
+                setCurrentTab('operator-screening');
+              }}
+              onViewScreening={handleViewScreening}
+              onRecapture={handleRecapture}
             />
           )}
 
           {currentTab === 'operator-patients' && (
             <OperatorPatients
               screenings={screenings}
-              onNavigateScreening={() => setCurrentTab('operator-screening')}
+              onNavigateScreening={() => {
+                setRecaptureScreening(null);
+                setCurrentTab('operator-screening');
+              }}
+            />
+          )}
+
+          {currentTab === 'operator-screening-result' && (
+            <DoctorScreeningResult
+              result={activeResult}
+              isOperator={true}
+              onBack={() => {
+                loadScreenings();
+                setCurrentTab('operator-queue');
+              }}
+              onNewScreening={() => {
+                setRecaptureScreening(null);
+                loadScreenings();
+                setCurrentTab('operator-screening');
+              }}
+              onRecapture={handleRecapture}
             />
           )}
         </>
@@ -168,8 +267,19 @@ export function AppContent() {
           {currentTab === 'doctor-screening-result' && (
             <DoctorScreeningResult
               result={activeResult}
-              onBack={() => setCurrentTab('doctor-dashboard')}
-              onNewScreening={() => setCurrentTab('doctor-screenings')}
+              isOperator={false}
+              onBack={() => {
+                loadScreenings();
+                setCurrentTab('doctor-dashboard');
+              }}
+              onReviewSubmitted={async (updatedScreening) => {
+                setActiveResult(updatedScreening);
+                await loadScreenings();
+              }}
+              onNewScreening={() => {
+                loadScreenings();
+                setCurrentTab('doctor-screenings');
+              }}
             />
           )}
 
@@ -177,6 +287,7 @@ export function AppContent() {
             <DoctorPendingReviews
               screenings={screenings}
               onViewScreening={handleViewScreening}
+              onRefresh={loadScreenings}
             />
           )}
 

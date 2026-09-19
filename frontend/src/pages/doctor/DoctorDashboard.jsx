@@ -8,20 +8,32 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
 export const Dashboard = ({ screenings = [], onViewScreening, onNavigateScreenings }) => {
-  // Pending Specialist Reviews: referred cases (Grade >= 2 or referralRequired) awaiting clinician sign-off
-  const pendingReviews = screenings.filter((s) => !s.humanReview?.reviewed && (s.triage?.referralRequired || s.drGrade >= 2 || s.grade >= 2));
-  const urgentCount = pendingReviews.filter((s) => s.triage?.priority === 'URGENT' || s.drGrade === 4 || s.grade === 4).length;
-  const highCount = pendingReviews.filter((s) => s.triage?.priority === 'HIGH' || s.drGrade === 3 || s.grade === 3).length;
-  const mediumCount = pendingReviews.filter((s) => s.triage?.priority === 'MEDIUM' || s.drGrade === 2 || s.grade === 2).length;
-  const reviewedTotal = screenings.filter((s) => s.humanReview?.reviewed).length;
+  // Pending Specialist Reviews: strictly canonical drGrade >= 2, GRADABLE, unreviewed
+  const pendingReviews = screenings.filter((s) => 
+    s.status === 'GRADABLE' &&
+    s.drGrade !== null &&
+    s.drGrade !== undefined &&
+    Number(s.drGrade) >= 2 &&
+    !s.humanReview?.reviewed &&
+    s.triage?.status !== 'REVIEWED' &&
+    s.triage?.status !== 'COMPLETED'
+  );
+  const urgentCount = pendingReviews.filter((s) => s.drGrade === 4 || s.triage?.priority === 'URGENT').length;
+  const highCount = pendingReviews.filter((s) => s.drGrade === 3 || s.triage?.priority === 'HIGH').length;
+  const mediumCount = pendingReviews.filter((s) => s.drGrade === 2 || s.triage?.priority === 'MEDIUM').length;
+  const reviewedTotal = screenings.filter((s) => 
+    s.status === 'GRADABLE' &&
+    s.drGrade >= 2 &&
+    (s.humanReview?.reviewed || s.triage?.status === 'REVIEWED')
+  ).length;
 
-  // Sorting Pending Reviews: Priority (URGENT > HIGH > MEDIUM), then chronological
+  // Sorting Pending Reviews: Priority (URGENT > HIGH > MEDIUM), then oldest waiting case first
   const priorityRank = { URGENT: 3, HIGH: 2, MEDIUM: 1, ROUTINE: 0 };
   const sortedPending = [...pendingReviews].sort((a, b) => {
-    const pA = priorityRank[a.triage?.priority] || (a.drGrade === 4 ? 3 : a.drGrade === 3 ? 2 : a.drGrade === 2 ? 1 : 0);
-    const pB = priorityRank[b.triage?.priority] || (b.drGrade === 4 ? 3 : b.drGrade === 3 ? 2 : b.drGrade === 2 ? 1 : 0);
+    const pA = priorityRank[a.triage?.priority] || (a.drGrade === 4 ? 3 : a.drGrade === 3 ? 2 : 1);
+    const pB = priorityRank[b.triage?.priority] || (b.drGrade === 4 ? 3 : b.drGrade === 3 ? 2 : 1);
     if (pB !== pA) return pB - pA;
-    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
   });
 
   return (
