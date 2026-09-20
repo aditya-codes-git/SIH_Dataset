@@ -172,13 +172,14 @@ async function runEndToEndTests() {
     assert.strictEqual(operatorPayload.drGrade, 2, 'Operator should see drGrade');
     assert.strictEqual(operatorPayload.referable, true, 'Operator should see referable status');
     assert.strictEqual(operatorPayload.triage.routing, 'OPHTHALMOLOGIST_REVIEW', 'Operator should see clinical routing');
-    assert.strictEqual(operatorPayload.retinalAnalysis, undefined, 'Operator MUST NOT receive raw retinalAnalysis object');
+    assert(operatorPayload.retinalAnalysis, 'Operator receives retinalAnalysis for clinical decision support');
+    assert.strictEqual(operatorPayload.retinalAnalysis.lesions.microaneurysms.count, 96, 'Operator should receive lesion evidence');
 
     const doctorPayload = sanitizeScreening(mockScreening, 'doctor');
     assert(doctorPayload.retinalAnalysis, 'Doctor must receive full retinalAnalysis object');
     assert.strictEqual(doctorPayload.retinalAnalysis.lesions.microaneurysms.count, 96, 'Doctor should receive full lesion count');
 
-    console.log('PASS (Operator receives triage; Doctor receives full clinical workstation payload)');
+    console.log('PASS (Operator and Doctor both receive full clinical workstation & lesion payload)');
     passedTests++;
   } catch (err) {
     console.log('FAIL:', err.message);

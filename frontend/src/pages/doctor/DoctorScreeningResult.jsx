@@ -88,6 +88,9 @@ export const ScreeningResult = ({
     }
   };
 
+  console.log('[DoctorScreeningResult] currentResult:', currentResult);
+  console.log('[DoctorScreeningResult] retinalAnalysis.lesions:', currentResult?.retinalAnalysis?.lesions);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} className="animate-fade-in">
       {/* Top Header Information Bar */}

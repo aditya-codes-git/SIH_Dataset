@@ -36,7 +36,14 @@ function sanitizeScreening(screening, role) {
         fovRatio: doc.quality?.fovRatio,
       },
       drGrade: doc.drGrade,
+      predictedClass: doc.predictedClass || (doc.drGrade != null ? String(doc.drGrade) : null),
       confidence: doc.confidence != null ? Number(doc.confidence) : null,
+      rawConfidence: doc.rawConfidence != null ? Number(doc.rawConfidence) : (doc.confidence != null ? Number(doc.confidence) : null),
+      calibratedConfidence: doc.calibratedConfidence != null ? Number(doc.calibratedConfidence) : null,
+      referableRiskProbability: doc.referableRiskProbability != null ? Number(doc.referableRiskProbability) : null,
+      probabilities: doc.probabilities || undefined,
+      calibratedProbabilities: doc.calibratedProbabilities || undefined,
+      calibration: doc.calibration || undefined,
       referable: doc.referable ?? (doc.drGrade !== null && doc.drGrade >= 2),
       referral: doc.referral || (doc.drGrade !== null && doc.drGrade >= 2 ? 'Referable DR' : 'Non-Referable'),
       triage: doc.triage || {
@@ -57,6 +64,7 @@ function sanitizeScreening(screening, role) {
       message: doc.message || null,
       originalImageUrl: doc.originalImageUrl || `/api/files/original/${originalFilename}`,
       gradcamUrl: doc.gradcamUrl || `/api/files/gradcam/${gradcamFilename}`,
+      retinalAnalysis: doc.retinalAnalysis || undefined,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -66,8 +74,12 @@ function sanitizeScreening(screening, role) {
   return {
     ...doc,
     confidence: doc.confidence != null ? Number(doc.confidence) : null,
+    rawConfidence: doc.rawConfidence != null ? Number(doc.rawConfidence) : (doc.confidence != null ? Number(doc.confidence) : null),
+    calibratedConfidence: doc.calibratedConfidence != null ? Number(doc.calibratedConfidence) : null,
+    referableRiskProbability: doc.referableRiskProbability != null ? Number(doc.referableRiskProbability) : null,
     originalImageUrl: doc.originalImageUrl || `/api/files/original/${originalFilename}`,
     gradcamUrl: doc.gradcamUrl || `/api/files/gradcam/${gradcamFilename}`,
+    retinalAnalysis: doc.retinalAnalysis || undefined,
   };
 }
 

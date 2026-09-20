@@ -16,6 +16,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { api } from '../../services/api';
 import { ReportViewer } from '../../components/report/ReportViewer';
+import { LesionEvidenceCard } from '../../components/screening/LesionEvidenceCard';
 
 export const OperatorScreening = ({ onComplete, initialScreening = null }) => {
   // Clinical Stepper: 1. Registration, 2. Fundus Capture, 3. Quality & Screening Result, 4. Report
@@ -82,6 +83,8 @@ export const OperatorScreening = ({ onComplete, initialScreening = null }) => {
     try {
       setLoadingStage('Executing MATLAB screening algorithm (drScreen.m)...');
       const res = await api.createScreening(formData);
+      console.log('[OperatorScreening] createScreening returned:', res);
+      console.log('[OperatorScreening] retinalAnalysis.lesions:', res?.retinalAnalysis?.lesions);
       setScreeningResult(res);
 
       if (res.status === 'UNGRADABLE') {
@@ -615,6 +618,14 @@ export const OperatorScreening = ({ onComplete, initialScreening = null }) => {
               <span>Grad-CAM highlights spatial lesion evidence regions that influenced the model prediction.</span>
             </div>
           </Card>
+
+          {/* Model-Predicted Lesion Evidence (Microaneurysms, Haemorrhages, Hard Exudates, Soft Exudates) */}
+          {screeningResult.retinalAnalysis && screeningResult.retinalAnalysis.lesions && (
+            <LesionEvidenceCard
+              retinalAnalysis={screeningResult.retinalAnalysis}
+              originalUrl={screeningResult.originalImageUrl}
+            />
+          )}
 
           {/* Action Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

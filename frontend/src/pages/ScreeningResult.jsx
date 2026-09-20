@@ -6,6 +6,7 @@ import { QualityCard } from '../components/screening/QualityCard';
 import { UngradableWarning } from '../components/screening/UngradableWarning';
 import { ClinicalReviewForm } from '../components/review/ClinicalReviewForm';
 import { AIAssistantPanel } from '../components/assistant/AIAssistantPanel';
+import { LesionEvidenceCard } from '../components/screening/LesionEvidenceCard';
 import { Button } from '../components/ui/Button';
 import { api } from '../services/api';
 
@@ -55,6 +56,13 @@ export const ScreeningResult = ({ result: initialResult, onBack, onNewScreening 
         <>
           <ModelResultCard result={result} />
           <ImageComparison originalUrl={originalUrl} gradcamUrl={gradcamUrl} />
+
+          {result.retinalAnalysis && result.retinalAnalysis.lesions && (
+            <LesionEvidenceCard
+              retinalAnalysis={result.retinalAnalysis}
+              originalUrl={result.originalImageUrl}
+            />
+          )}
 
           <div style={{
             display: 'grid',
