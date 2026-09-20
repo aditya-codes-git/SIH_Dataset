@@ -76,7 +76,7 @@ export const ImageComparison = ({ originalUrl, gradcamUrl }) => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <Flame size={13} color="#F59E0B" />
-              <span>Evidence Regions (Grad-CAM Heatmap)</span>
+              <span>Model Attention (Grad-CAM)</span>
             </div>
             <button
               onClick={() => setFullscreenImage({ url: gradcamUrl, title: 'Grad-CAM Attention Heatmap' })}
@@ -110,7 +110,7 @@ export const ImageComparison = ({ originalUrl, gradcamUrl }) => {
       }}>
         <Info size={14} color="var(--primary)" style={{ flexShrink: 0 }} />
         <span>
-          <strong>Clinician Guidance:</strong> Grad-CAM visualizes gradient feature maps highlighting anatomical retinal regions (such as microaneurysms, hemorrhages, or exudates) that contributed directly to the model's classification.
+          <strong>Clinician Guidance:</strong> Grad-CAM highlights model-attention regions that influenced the classification prediction.
         </span>
       </div>
 

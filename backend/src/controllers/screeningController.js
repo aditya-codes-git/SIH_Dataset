@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const Screening = require('../models/Screening');
 const matlabService = require('../services/matlab/matlabService');
 const { getDBStatus } = require('../config/db');
@@ -75,6 +77,32 @@ const createScreening = async (req, res, next) => {
       },
       createdAt: new Date().toISOString(),
     };
+
+    // Diagnostic metadata for Grad-CAM verification (Requirement 7)
+    if (matlabResult.gradcamUrl) {
+      const gradcamDiskPath = path.resolve(__dirname, '../../../uploads/gradcam', `${screeningId}_gradcam.png`);
+      let dims = { width: 0, height: 0 };
+      let mtime = null;
+      let sizeBytes = 0;
+      if (fs.existsSync(gradcamDiskPath)) {
+        const stat = fs.statSync(gradcamDiskPath);
+        mtime = stat.mtime;
+        sizeBytes = stat.size;
+        try {
+          const buf = fs.readFileSync(gradcamDiskPath);
+          dims = { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+        } catch (_) {}
+      }
+      console.log('====================================================');
+      console.log('[GradCAM DIAGNOSTIC]');
+      console.log('screening ID:    ', screeningId);
+      console.log('asset path:      ', gradcamDiskPath);
+      console.log('asset timestamp: ', mtime);
+      console.log('asset size:      ', sizeBytes, 'bytes');
+      console.log('asset dimensions:', `${dims.width}x${dims.height}`);
+      console.log('asset source:    ', dims.width > 500 ? 'Phase 4.5 High-Resolution Multi-Scale Fused Grad-CAM' : 'LEGACY Baseline 224x224 scoreMap');
+      console.log('====================================================');
+    }
 
     // Save full clinical result to MongoDB if DB is connected
     const dbStatus = getDBStatus();

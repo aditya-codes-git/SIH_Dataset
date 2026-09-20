@@ -30,23 +30,38 @@ function runScreeningFromFile(inputPath, outputPath, gradcamPath)
         response.referable = logical(result.referable);
         response.referral = char(result.referral);
 
-        % Save Grad-CAM image
-        figure('Visible','off');
+        % Save Phase 4.5 High-Resolution Multi-Scale Grad-CAM
+        aiRebuildDir = fullfile(fileparts(mfilename('fullpath')), 'AI_REBUILD');
+        addpath(fullfile(aiRebuildDir, '06_explainability'));
+        addpath(fullfile(aiRebuildDir, '07_retinal_analysis'));
+        addpath(fullfile(aiRebuildDir, '04_calibration'));
+        addpath(fullfile(aiRebuildDir, '02_training'));
 
-        imshow(result.processedImage);
-        hold on;
+        hasImprovedGradCAM = false;
+        if exist('generateImprovedGradCAM', 'file')
+            try
+                modelFile = fullfile(aiRebuildDir, '02_training', 'models', 'trained_dr_model_r18_final_candidate.mat');
+                gradRes = generateImprovedGradCAM(img, 'ModelFile', modelFile, 'Strategy', 'MultiScaleFusion');
+                imwrite(uint8(gradRes.overlayImage * 255), gradcamPath);
+                response.gradcamPath = gradcamPath;
+                hasImprovedGradCAM = true;
+            catch ME_GRADCAM
+                warning('ScreeningRunner:ImprovedGradCAMFailed', 'generateImprovedGradCAM failed: %s', ME_GRADCAM.message);
+            end
+        end
 
-        imagesc(result.scoreMap,'AlphaData',0.35);
-        colormap jet;
-
-        axis off;
-        hold off;
-
-        exportgraphics(gca,gradcamPath);
-
-        close;
-
-        response.gradcamPath = gradcamPath;
+        if ~hasImprovedGradCAM
+            figure('Visible','off');
+            imshow(result.processedImage);
+            hold on;
+            imagesc(result.scoreMap,'AlphaData',0.35);
+            colormap jet;
+            axis off;
+            hold off;
+            exportgraphics(gca,gradcamPath);
+            close;
+            response.gradcamPath = gradcamPath;
+        end
 
         % Optional Retinal Anatomical & Deep Learning Lesion Evidence Integration
         try
@@ -102,6 +117,12 @@ function runScreeningFromFile(inputPath, outputPath, gradcamPath)
             if exist('runFullRetinalAnalysis', 'file')
                 retinalRes = runFullRetinalAnalysis(img, analysisOutDir, 'Prefix', prefix);
                 response.retinalAnalysis = retinalRes;
+                
+                % Ensure gradcamPath matches the Phase 4.5 high-resolution overlay asset
+                if isfield(retinalRes, 'assets') && isfield(retinalRes.assets, 'gradcamOverlay') && exist(retinalRes.assets.gradcamOverlay, 'file')
+                    copyfile(retinalRes.assets.gradcamOverlay, gradcamPath);
+                    response.gradcamPath = gradcamPath;
+                end
             end
         catch ME_ANALYSIS
             % Non-blocking safety: screening response proceeds even if analysis engine fails

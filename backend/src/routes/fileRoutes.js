@@ -34,6 +34,7 @@ router.get('/gradcam/:filename', authenticateUser, authorizeRole('operator', 'do
 
   if (fs.existsSync(filePath)) {
     res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(filePath);
   } else {
     res.status(404).json({ status: 'FAILED', error: 'Grad-CAM image file not found.' });
@@ -47,6 +48,7 @@ router.get('/results/:filename', authenticateUser, authorizeRole('operator', 'do
   const filePath = path.join(resultsDir, filename);
 
   if (fs.existsSync(filePath)) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     if (filename.endsWith('.png')) {
       res.setHeader('Content-Type', 'image/png');
     } else if (filename.endsWith('.json')) {

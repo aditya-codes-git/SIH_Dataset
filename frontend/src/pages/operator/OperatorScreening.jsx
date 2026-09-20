@@ -615,7 +615,7 @@ export const OperatorScreening = ({ onComplete, initialScreening = null }) => {
               color: 'var(--text-muted)',
             }}>
               <Info size={13} color="var(--primary)" />
-              <span>Grad-CAM highlights spatial lesion evidence regions that influenced the model prediction.</span>
+              <span>Grad-CAM highlights model-attention regions that influenced the classification prediction.</span>
             </div>
           </Card>
 
