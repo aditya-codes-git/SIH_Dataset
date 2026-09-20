@@ -21,6 +21,11 @@ if (!fs.existsSync(resultsDir)) {
   fs.mkdirSync(resultsDir, { recursive: true });
 }
 
+const lesionMasksDir = path.resolve(__dirname, '../../uploads/results/lesion_masks');
+if (!fs.existsSync(lesionMasksDir)) {
+  fs.mkdirSync(lesionMasksDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);

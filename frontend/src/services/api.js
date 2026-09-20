@@ -121,6 +121,7 @@ export const api = {
 
     if (!cleanPath.startsWith('/')) cleanPath = `/${cleanPath}`;
     const separator = cleanPath.includes('?') ? '&' : '?';
-    return `http://127.0.0.1:5000${cleanPath}${separator}role=${role}`;
+    const apiHost = BASE_URL.replace(/\/api\/?$/, '');
+    return `${apiHost}${cleanPath}${separator}role=${role}`;
   }
 };

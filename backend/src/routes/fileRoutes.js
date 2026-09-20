@@ -9,7 +9,8 @@ const gradcamDir = path.resolve(__dirname, '../../uploads/gradcam');
 
 // GET /api/files/original/:filename - Serve original image (Authenticated users)
 router.get('/original/:filename', authenticateUser, (req, res) => {
-  const filePath = path.join(originalDir, req.params.filename);
+  const filename = path.basename(req.params.filename);
+  const filePath = path.join(originalDir, filename);
   if (fs.existsSync(filePath)) {
     res.sendFile(filePath);
   } else {
@@ -19,7 +20,7 @@ router.get('/original/:filename', authenticateUser, (req, res) => {
 
 // GET /api/files/gradcam/:filename - Serve Grad-CAM image (Authenticated users: Operator & Doctor)
 router.get('/gradcam/:filename', authenticateUser, authorizeRole('operator', 'doctor'), (req, res) => {
-  const filename = req.params.filename;
+  const filename = path.basename(req.params.filename);
   let filePath = path.join(gradcamDir, filename);
 
   // Fallback check if filename lacks _gradcam suffix

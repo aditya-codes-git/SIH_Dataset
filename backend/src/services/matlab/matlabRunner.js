@@ -21,7 +21,9 @@ async function runMatlabScreening(inputImagePath, outputJsonPath, gradcamPath) {
   const matlabDir = path.resolve(__dirname, '../../../../').replace(/\\/g, '/');
 
   // Command to run runScreeningFromFile in MATLAB batch mode
-  const matlabCommand = `matlab -batch "addpath('${matlabDir}'); runScreeningFromFile('${normalizedInput}', '${normalizedOutput}', '${normalizedGradcam}');"`;
+  const matlabBin = process.env.MATLAB_CMD || 'matlab';
+  const cmdPrefix = matlabBin.includes(' ') && !matlabBin.startsWith('"') ? `"${matlabBin}"` : matlabBin;
+  const matlabCommand = `${cmdPrefix} -batch "addpath('${matlabDir}'); runScreeningFromFile('${normalizedInput}', '${normalizedOutput}', '${normalizedGradcam}');"`;
 
   console.log(`[MATLAB RUNNER] Executing MATLAB CLI...`);
   console.log(`[MATLAB RUNNER] Command: ${matlabCommand}`);
