@@ -207,7 +207,63 @@ export const ReportViewer = ({ screening, onBack }) => {
                   />
                 </div>
               )}
+
+              {screening.retinalAnalysis?.assets?.lesionOverlay && (
+                <div style={{ textAlign: 'center', backgroundColor: '#000000', borderRadius: 'var(--radius-xs)', padding: '0.35rem', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#FFFFFF', display: 'block', marginBottom: '0.25rem' }}>
+                    Model-Predicted Lesion Overlay (U-Net)
+                  </span>
+                  <img
+                    src={api.getFileUrl(screening.retinalAnalysis.assets.lesionOverlay)}
+                    alt="Lesion Overlay"
+                    style={{ width: '100%', maxHeight: '180px', objectFit: 'contain' }}
+                  />
+                </div>
+              )}
             </div>
+          </div>
+        )}
+
+        {/* MODEL-PREDICTED LESION FINDINGS TABLE */}
+        {screening.retinalAnalysis?.lesions && (
+          <div style={{
+            marginBottom: '1.25rem',
+            padding: '0.875rem',
+            borderRadius: 'var(--radius-xs)',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+          }}>
+            <h3 style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+              MODEL-PREDICTED LESION EVIDENCE (IDRiD U-NET BENCHMARK)
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.5rem' }}>
+              {[
+                { label: 'Microaneurysms', key: 'microaneurysms', code: 'MA' },
+                { label: 'Haemorrhages', key: 'haemorrhages', code: 'HE' },
+                { label: 'Hard Exudates', key: 'hardExudates', code: 'EX' },
+                { label: 'Soft Exudates', key: 'softExudates', code: 'SE', note: '(Sparse val data)' },
+              ].map((item) => {
+                const data = screening.retinalAnalysis.lesions[item.key];
+                return (
+                  <div key={item.key} style={{ padding: '0.5rem', backgroundColor: 'var(--bg-card)', borderRadius: 'var(--radius-xs)', border: '1px solid var(--border-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>{item.code}</span>
+                      <Badge variant={data?.present ? 'danger' : 'neutral'} size="xs">
+                        {data?.present ? 'Detected' : 'Not Detected'}
+                      </Badge>
+                    </div>
+                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                      <div>Count: <strong>{data?.count ?? 0}</strong></div>
+                      <div>Area: <strong>{data?.totalPixelArea ? `${data.totalPixelArea} px` : '0 px'}</strong></div>
+                      {item.note && <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{item.note}</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', margin: '0.5rem 0 0 0' }}>
+              *Model-predicted lesion evidence only. Not a clinical diagnosis.
+            </p>
           </div>
         )}
 

@@ -118,6 +118,10 @@ const screeningSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    retinalAnalysis: {
+      type: mongoose.Schema.Types.Mixed,
+      default: undefined,
+    },
     message: {
       type: String,
       default: null,

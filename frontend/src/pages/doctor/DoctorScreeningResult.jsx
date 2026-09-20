@@ -9,6 +9,7 @@ import { ModelResultCard } from '../../components/screening/ModelResultCard';
 import { ClinicalReviewForm } from '../../components/review/ClinicalReviewForm';
 import { AIAssistantPanel } from '../../components/assistant/AIAssistantPanel';
 import { ReportViewer } from '../../components/report/ReportViewer';
+import { LesionEvidenceCard } from '../../components/screening/LesionEvidenceCard';
 import { api } from '../../services/api';
 import { getReviewStatus, getReferralRouting } from '../../utils/clinicalStatus';
 
@@ -200,6 +201,14 @@ export const ScreeningResult = ({
             originalUrl={api.getFileUrl(currentResult.originalImageUrl)}
             gradcamUrl={api.getFileUrl(currentResult.gradcamUrl)}
           />
+
+          {/* Model-Predicted Lesion Evidence Card (Microaneurysms, Haemorrhages, Hard Exudates, Soft Exudates) */}
+          {currentResult.retinalAnalysis && currentResult.retinalAnalysis.lesions && (
+            <LesionEvidenceCard
+              retinalAnalysis={currentResult.retinalAnalysis}
+              originalUrl={currentResult.originalImageUrl}
+            />
+          )}
 
           {/* Clinical Review Form & Summary */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>

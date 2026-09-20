@@ -23,6 +23,8 @@ parse(p, imgInput, outDir, varargin{:});
 baseDir = fileparts(fileparts(mfilename('fullpath'))); % AI_REBUILD/
 addpath(fullfile(baseDir, '06_explainability'));
 addpath(fullfile(baseDir, '07_retinal_analysis'));
+addpath(fullfile(baseDir, '07_retinal_analysis', 'lesion_engine', 'inference'));
+addpath(fullfile(baseDir, '07_retinal_analysis', 'lesion_engine', 'visualization'));
 addpath(fullfile(baseDir, '04_calibration'));
 addpath(fullfile(baseDir, '02_training'));
 
@@ -63,7 +65,53 @@ gradRes = generateImprovedGradCAM(origImg, 'ModelFile', p.Results.ModelFile, 'St
 evidence = matchEvidenceRegions(findings, hotspots, gradRes.heatmap, ...
     'OpticDisc', od, 'Macula', mac, 'RetinalField', rf);
 
-% 8. EXPORT DISCRETE VISUAL ASSETS
+% 8. DEEP LEARNING LESION SEGMENTATION & EVIDENCE EXTRACTION
+lesionModelPath = fullfile(baseDir, '07_retinal_analysis', 'lesion_engine', 'segmentation_training', 'models', 'best_lesion_unet.mat');
+lesionEvidence = struct();
+lesionOverlayPath = '';
+
+try
+    if exist(lesionModelPath, 'file')
+        % Run tiled inference
+        [probMaps, ~] = predictLesions(origImg, lesionModelPath);
+        
+        % Build masks for postprocessing
+        odMask = false(size(rf.mask));
+        if od.detected
+            [Ygrid, Xgrid] = ndgrid(1:size(rf.mask, 1), 1:size(rf.mask, 2));
+            distSq = (Xgrid - od.centerX).^2 + (Ygrid - od.centerY).^2;
+            odMask = (distSq <= od.radius^2);
+        end
+        
+        % Postprocess masks with calibrated dev thresholds [MA: 0.40, HE: 0.40, EX: 0.40, SE: 0.35]
+        calibThresholds = [0.40, 0.40, 0.40, 0.35];
+        binMasks = postprocessLesionMasks(probMaps, rf.mask, odMask, calibThresholds);
+        
+        % Save discrete mask directory
+        masksSubDir = fullfile(outDir, 'lesion_masks');
+        imgIdTag = regexprep(prefix, '[^a-zA-Z0-9]', '');
+        if isempty(imgIdTag), imgIdTag = 'case'; end
+        
+        lesionEvidenceResult = extractLesionEvidence(binMasks, probMaps, rf.mask, masksSubDir, imgIdTag);
+        lesionEvidence = lesionEvidenceResult.retinalAnalysis.lesions;
+        lesionSummary = lesionEvidenceResult.retinalAnalysis.summary;
+        
+        % Render composite lesion overlay
+        if exist('renderLesionOverlay', 'file')
+            renderLesionOverlay(origImg, binMasks, [], outDir, sprintf('%slesion', prefix));
+            lesionOverlayPath = fullfile(outDir, sprintf('%slesion_combined_overlay.png', prefix));
+        end
+    else
+        lesionEvidence = struct('status', 'UNAVAILABLE', 'message', 'Lesion segmentation model not found');
+        lesionSummary = struct('status', 'UNAVAILABLE');
+    end
+catch ME
+    warning('RetinalAnalysis:LesionInferenceFailed', 'Lesion segmentation failed: %s', ME.message);
+    lesionEvidence = struct('status', 'FAILED', 'error', ME.message);
+    lesionSummary = struct('status', 'FAILED');
+end
+
+% 9. EXPORT DISCRETE VISUAL ASSETS
 % A. Original Fundus
 origPath = fullfile(outDir, sprintf('%soriginal_fundus.png', prefix));
 imwrite(uint8(gradRes.originalImage * 255), origPath);
@@ -84,7 +132,7 @@ renderRetinalAnalysis(origImg, rf, od, mac, struct([]), struct([]), 'OutputPath'
 analysisImgPath = fullfile(outDir, sprintf('%sretinal_analysis.png', prefix));
 renderRetinalAnalysis(origImg, rf, od, mac, findings, hotspots, 'OutputPath', analysisImgPath);
 
-% 9. PACK STRUCTURED RESULT
+% 10. PACK STRUCTURED RESULT
 retinalAnalysis = struct();
 retinalAnalysis.retinalField = struct(...
     'detected', rf.detected, ...
@@ -122,14 +170,21 @@ retinalAnalysis.candidateFindings = findings;
 retinalAnalysis.evidenceRegions = evidence;
 retinalAnalysis.hotspots = hotspots;
 
+% Add distinct lesion evidence section
+retinalAnalysis.lesions = lesionEvidence;
+if exist('lesionSummary', 'var')
+    retinalAnalysis.lesionSummary = lesionSummary;
+end
+
 retinalAnalysis.assets = struct(...
     'originalFundus', origPath, ...
     'gradcamOverlay', overlayPath, ...
     'attentionPoints', ptsPath, ...
     'retinalLandmarks', landmarksPath, ...
-    'retinalAnalysis', analysisImgPath);
+    'retinalAnalysis', analysisImgPath, ...
+    'lesionOverlay', lesionOverlayPath);
 
-retinalAnalysis.disclaimer = 'Candidate findings and attention hotspots represent unsupervised image-processing saliency and neural visual attention. They do not constitute validated microscopic lesion diagnoses (microaneurysms, hemorrhages, or exudates).';
+retinalAnalysis.disclaimer = 'Candidate findings and attention hotspots represent unsupervised image-processing saliency and neural visual attention. Lesion evidence represents model-predicted pixel segmentations trained on IDRiD; they do not constitute clinically confirmed diagnoses without qualified clinician review.';
 
 % Save JSON
 jsonPath = fullfile(outDir, sprintf('%sretinal_analysis.json', prefix));

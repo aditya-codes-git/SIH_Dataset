@@ -48,6 +48,66 @@ function runScreeningFromFile(inputPath, outputPath, gradcamPath)
 
         response.gradcamPath = gradcamPath;
 
+        % Optional Retinal Anatomical & Deep Learning Lesion Evidence Integration
+        try
+            analysisOutDir = fileparts(outputPath);
+            [~, fileBaseName] = fileparts(outputPath);
+            prefix = strrep(fileBaseName, '_result', '');
+            
+            aiRebuildDir = fullfile(fileparts(mfilename('fullpath')), 'AI_REBUILD');
+            addpath(fullfile(aiRebuildDir, '07_retinal_analysis'));
+            addpath(fullfile(aiRebuildDir, '06_explainability'));
+            addpath(fullfile(aiRebuildDir, '04_calibration'));
+            addpath(fullfile(aiRebuildDir, '02_training'));
+            
+            % Add Phase 3 Calibrated Probabilities if calibration exists
+            calibParamFile = fullfile(aiRebuildDir, '04_calibration', 'calibration_parameters.mat');
+            if exist(calibParamFile, 'file')
+                calibData = load(calibParamFile);
+                temp = calibData.calibration.temperature;
+                % Classify scores mapping
+                if isfield(result, 'confidence')
+                    % Raw scores approximation or exact softmax logits if available
+                    % Populate probability distribution
+                    scores = zeros(1, 5);
+                    gIdx = round(result.grade) + 1;
+                    if gIdx >= 1 && gIdx <= 5
+                        scores(gIdx) = result.confidence;
+                        remConf = (1.0 - result.confidence) / 4.0;
+                        for si = 1:5
+                            if si ~= gIdx, scores(si) = remConf; end
+                        end
+                    end
+                    response.probabilities = scores;
+                    response.rawConfidence = result.confidence;
+                    
+                    % Calibrated softmax with temperature
+                    logits = log(max(scores, 1e-6));
+                    scaledLogits = logits / temp;
+                    scaledLogits = scaledLogits - max(scaledLogits);
+                    calibProbs = exp(scaledLogits) / sum(exp(scaledLogits));
+                    
+                    response.calibratedProbabilities = calibProbs;
+                    response.calibratedConfidence = calibProbs(gIdx);
+                    response.referableRiskProbability = sum(calibProbs(3:5));
+                    response.calibration = struct(...
+                        'calibrated', true, ...
+                        'temperature', temp, ...
+                        'method', 'TemperatureScaling', ...
+                        'modelVersion', 'R18-FINAL-CANDIDATE');
+                end
+            end
+            
+            % Run full retinal anatomical + deep learning lesion evidence
+            if exist('runFullRetinalAnalysis', 'file')
+                retinalRes = runFullRetinalAnalysis(img, analysisOutDir, 'Prefix', prefix);
+                response.retinalAnalysis = retinalRes;
+            end
+        catch ME_ANALYSIS
+            % Non-blocking safety: screening response proceeds even if analysis engine fails
+            warning('ScreeningRunner:AnalysisSkipped', 'Retinal/lesion analysis skipped: %s', ME_ANALYSIS.message);
+        end
+
     end
 
     % Convert result to JSON

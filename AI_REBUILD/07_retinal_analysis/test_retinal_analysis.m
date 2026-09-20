@@ -118,17 +118,29 @@ assert(~resBlack.vessels.available, 'Must not fabricate vessel mask');
 assert(isempty(resBlack.candidateFindings), 'Must not fabricate findings');
 fprintf('PASSED (All failure flags correctly triggered)\n');
 
-% TEST K: Original image dimensions preserved across all 5 assets
+% TEST K: Original image dimensions preserved across all assets
 fprintf('[TEST K] Dimensions preserved across visual assets: ');
 assert(exist(res1.assets.originalFundus, 'file') > 0, 'originalFundus asset missing');
 assert(exist(res1.assets.gradcamOverlay, 'file') > 0, 'gradcamOverlay asset missing');
 assert(exist(res1.assets.attentionPoints, 'file') > 0, 'attentionPoints asset missing');
 assert(exist(res1.assets.retinalLandmarks, 'file') > 0, 'retinalLandmarks asset missing');
 assert(exist(res1.assets.retinalAnalysis, 'file') > 0, 'retinalAnalysis asset missing');
+if isfield(res1.assets, 'lesionOverlay') && ~isempty(res1.assets.lesionOverlay)
+    assert(exist(res1.assets.lesionOverlay, 'file') > 0, 'lesionOverlay asset missing');
+end
 
 analysisImg = imread(res1.assets.retinalAnalysis);
 assert(size(analysisImg, 1) == H_orig && size(analysisImg, 2) == W_orig, 'Rendered asset resolution mismatch');
 fprintf('PASSED (%dx%d across all assets)\n', W_orig, H_orig);
+
+% TEST K2: Lesion evidence structure check
+fprintf('[TEST K2] Lesion evidence structure verified: ');
+assert(isfield(res1, 'lesions'), 'lesions field missing from retinalAnalysis');
+assert(isfield(res1.lesions, 'microaneurysms'), 'microaneurysms field missing');
+assert(isfield(res1.lesions, 'haemorrhages'), 'haemorrhages field missing');
+assert(isfield(res1.lesions, 'hardExudates'), 'hardExudates field missing');
+assert(isfield(res1.lesions, 'softExudates'), 'softExudates field missing');
+fprintf('PASSED (All 4 lesion classes present in evidence schema)\n');
 
 % TEST L: Determinism test
 fprintf('[TEST L] Determinism check (repeated execution): ');

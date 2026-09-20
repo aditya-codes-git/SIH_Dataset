@@ -1,0 +1,22 @@
+{
+  "architecture": "U-Net 3-level",
+  "totalParams": 483492,
+  "inputSize": [
+    256,
+    256,
+    3
+  ],
+  "numClasses": 4,
+  "classNames": [
+    "MA",
+    "HE",
+    "EX",
+    "SE"
+  ],
+  "numEpochs": 25,
+  "batchSize": 16,
+  "initialLR": 0.001,
+  "bestEpoch": 23,
+  "bestValMeanDice": 0.46233521974251829,
+  "trainingTimeMinutes": 5.96300132
+}

@@ -65,6 +65,7 @@ const createScreening = async (req, res, next) => {
       calibratedConfidence: matlabResult.calibratedConfidence !== undefined ? matlabResult.calibratedConfidence : null,
       referableRiskProbability: matlabResult.referableRiskProbability !== undefined ? matlabResult.referableRiskProbability : null,
       calibration: matlabResult.calibration || { calibrated: false, temperature: null, method: null, modelVersion: null },
+      retinalAnalysis: matlabResult.retinalAnalysis || undefined,
       humanReview: {
         reviewed: false,
         reviewer: null,
@@ -97,6 +98,7 @@ const createScreening = async (req, res, next) => {
           referral: matlabResult.referral,
           triage,
           gradcamImagePath: matlabResult.gradcamUrl ? `${matlabResult.screeningId}_gradcam.png` : null,
+          retinalAnalysis: matlabResult.retinalAnalysis || undefined,
           message: matlabResult.message || null,
         });
 

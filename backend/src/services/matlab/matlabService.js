@@ -80,6 +80,11 @@ class MatlabService {
         method: null,
         modelVersion: null,
       };
+
+      // Additive Phase 5 & 6 Retinal Analysis and Lesion Evidence
+      if (matlabData.retinalAnalysis) {
+        screeningResult.retinalAnalysis = matlabData.retinalAnalysis;
+      }
     }
 
     return screeningResult;
