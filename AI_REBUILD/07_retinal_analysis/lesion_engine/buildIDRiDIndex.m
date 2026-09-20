@@ -25,8 +25,12 @@ fprintf('===========================================================\n');
 fprintf('Source Path: %s\n', sourceDir);
 
 %% 1. Discover Images
-% Search for JPEG images in the standard archive hierarchy
-imgSearchPattern = fullfile(sourceDir, '**', '*.jpg');
+% Search for JPEG images in the standard grading archive hierarchy
+if exist(fullfile(sourceDir, 'archive'), 'dir')
+    imgSearchPattern = fullfile(sourceDir, 'archive', '**', '*.jpg');
+else
+    imgSearchPattern = fullfile(sourceDir, '**', '*.jpg');
+end
 imgFiles = dir(imgSearchPattern);
 if isempty(imgFiles)
     error('No JPG images discovered under %s', sourceDir);

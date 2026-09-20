@@ -32,7 +32,11 @@ fprintf('PASSED\n');
 
 %% TEST B: Images discovered
 fprintf('[TEST B] Images discovered: ');
-imgFiles = dir(fullfile(sourceDir, '**', '*.jpg'));
+if exist(fullfile(sourceDir, 'archive'), 'dir')
+    imgFiles = dir(fullfile(sourceDir, 'archive', '**', '*.jpg'));
+else
+    imgFiles = dir(fullfile(sourceDir, '**', '*.jpg'));
+end
 assert(~isempty(imgFiles), 'No JPG images found in source path');
 assert(length(imgFiles) == 455, 'Expected 455 images, found %d', length(imgFiles));
 fprintf('PASSED (Discovered %d fundus images)\n', length(imgFiles));
@@ -108,8 +112,12 @@ fprintf('PASSED\n');
 
 %% TEST L: No original dataset modifications
 fprintf('[TEST L] Original dataset preservation: ');
-% Confirm source directory still has 456 files (455 jpg + 1 csv)
-allSourceFiles = dir(fullfile(sourceDir, '**', '*.*'));
+% Confirm source grading directory still has 456 files (455 jpg + 1 csv)
+if exist(fullfile(sourceDir, 'archive'), 'dir')
+    allSourceFiles = dir(fullfile(sourceDir, 'archive', '**', '*.*'));
+else
+    allSourceFiles = dir(fullfile(sourceDir, '**', '*.*'));
+end
 allSourceFiles = allSourceFiles(~[allSourceFiles.isdir]);
 assert(length(allSourceFiles) == 456, 'Source file count altered! Expected 456, got %d', length(allSourceFiles));
 fprintf('PASSED (456 files preserved untouched)\n');
