@@ -1,0 +1,1 @@
+image_id,image_path,official_split,ma_mask_path,he_mask_path,ex_mask_path,se_mask_path,optic_disc_mask_path,image_width,image_height,ma_pixel_count,he_pixel_count,ex_pixel_count,se_pixel_count,has_ma,has_he,has_ex,has_se,has_od
