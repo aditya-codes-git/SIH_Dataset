@@ -98,13 +98,28 @@ export const api = {
     return data;
   },
 
-  getFileUrl: (path, roleParam = null) => {
-    if (!path) return '';
+  getFileUrl: (filePath, roleParam = null) => {
+    if (!filePath) return '';
     const role = roleParam || localStorage.getItem('retinoscan_demo_role') || 'operator';
-    if (path.startsWith('http')) {
-      return path.includes('role=') ? path : `${path}${path.includes('?') ? '&' : '?'}role=${role}`;
+    if (filePath.startsWith('http')) {
+      return filePath.includes('role=') ? filePath : `${filePath}${filePath.includes('?') ? '&' : '?'}role=${role}`;
     }
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+    // If it's a full filesystem path or basename from results
+    let cleanPath = filePath;
+    if (cleanPath.includes('\\') || cleanPath.includes('/')) {
+      const parts = cleanPath.split(/[\\/]/);
+      const filename = parts[parts.length - 1];
+      if (cleanPath.includes('results')) {
+        cleanPath = `/api/files/results/${filename}`;
+      } else if (cleanPath.includes('gradcam')) {
+        cleanPath = `/api/files/gradcam/${filename}`;
+      } else if (cleanPath.includes('original')) {
+        cleanPath = `/api/files/original/${filename}`;
+      }
+    }
+
+    if (!cleanPath.startsWith('/')) cleanPath = `/${cleanPath}`;
     const separator = cleanPath.includes('?') ? '&' : '?';
     return `http://127.0.0.1:5000${cleanPath}${separator}role=${role}`;
   }

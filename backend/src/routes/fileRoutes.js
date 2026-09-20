@@ -40,4 +40,22 @@ router.get('/gradcam/:filename', authenticateUser, authorizeRole('operator', 'do
   }
 });
 
+// GET /api/files/results/:filename - Serve generated result assets (lesion overlays, landmark maps)
+router.get('/results/:filename', authenticateUser, authorizeRole('operator', 'doctor'), (req, res) => {
+  const filename = path.basename(req.params.filename); // Prevent path traversal
+  const resultsDir = path.resolve(__dirname, '../../uploads/results');
+  const filePath = path.join(resultsDir, filename);
+
+  if (fs.existsSync(filePath)) {
+    if (filename.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (filename.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json');
+    }
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ status: 'FAILED', error: 'Result asset file not found.' });
+  }
+});
+
 module.exports = router;
