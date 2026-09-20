@@ -48,6 +48,7 @@ training.png
 # ------------------------------------------------------------------------------
 # Kaggle dataset raw images (~8.0 GB, 3,662 files) - strictly excluded
 train_images/
+IDRID/
 
 # Resized & processed dataset images (~310 MB, 3,662 files) - reproducible via prepare_preprocessed_dataset.m
 processed_train_images/
