@@ -1,0 +1,30 @@
+{
+  "modelName": "R18-FINAL-CANDIDATE",
+  "modelVersion": "2.0.0-final-candidate",
+  "filename": "AI_REBUILD/02_training/models/trained_dr_model_r18_final_candidate.mat",
+  "sha256": "da2f250763a12e51e4922f36d0b3f3237eaf3d324cec15f90770d7f40545de74",
+  "datasetSplitVersion": "1.0.0-canonical",
+  "splitsFile": "AI_REBUILD/01_data/dataset_splits.mat",
+  "splitCounts": {
+    "train": 2564,
+    "calibration": 550,
+    "test": 548,
+    "total": 3662
+  },
+  "preprocessingVersion": "canonical-224x224-contrast-enhanced-circular-mask",
+  "dateLocked": "2026-09-20",
+  "status": "FROZEN",
+  "classes": [
+    {"grade": 0, "label": "No DR"},
+    {"grade": 1, "label": "Mild NPDR"},
+    {"grade": 2, "label": "Moderate NPDR"},
+    {"grade": 3, "label": "Severe NPDR"},
+    {"grade": 4, "label": "Proliferative DR"}
+  ],
+  "governance": {
+    "doNotRetrain": true,
+    "doNotModifyWeights": true,
+    "calibrationFittingPartitionOnly": "CALIBRATION",
+    "testSplitUsage": "LOCKED_EVALUATION_ONLY"
+  }
+}

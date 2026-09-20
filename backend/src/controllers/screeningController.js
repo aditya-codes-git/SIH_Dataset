@@ -59,6 +59,12 @@ const createScreening = async (req, res, next) => {
       originalImageUrl,
       gradcamUrl: matlabResult.gradcamUrl,
       gradcamImagePath: matlabResult.gradcamUrl ? `${matlabResult.screeningId}_gradcam.png` : null,
+      probabilities: matlabResult.probabilities || undefined,
+      rawConfidence: matlabResult.rawConfidence !== undefined ? matlabResult.rawConfidence : null,
+      calibratedProbabilities: matlabResult.calibratedProbabilities || undefined,
+      calibratedConfidence: matlabResult.calibratedConfidence !== undefined ? matlabResult.calibratedConfidence : null,
+      referableRiskProbability: matlabResult.referableRiskProbability !== undefined ? matlabResult.referableRiskProbability : null,
+      calibration: matlabResult.calibration || { calibrated: false, temperature: null, method: null, modelVersion: null },
       humanReview: {
         reviewed: false,
         reviewer: null,

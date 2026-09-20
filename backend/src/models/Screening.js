@@ -69,6 +69,33 @@ const screeningSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Additive Phase 3 probability distribution & calibration metadata (optional)
+    probabilities: {
+      type: [Number],
+      default: undefined,
+    },
+    rawConfidence: {
+      type: Number,
+      default: null,
+    },
+    calibratedProbabilities: {
+      type: [Number],
+      default: undefined,
+    },
+    calibratedConfidence: {
+      type: Number,
+      default: null,
+    },
+    referableRiskProbability: {
+      type: Number,
+      default: null,
+    },
+    calibration: {
+      calibrated: { type: Boolean, default: false },
+      temperature: { type: Number, default: null },
+      method: { type: String, default: null },
+      modelVersion: { type: String, default: null },
+    },
     triage: {
       referralRequired: { type: Boolean, default: false },
       priority: {

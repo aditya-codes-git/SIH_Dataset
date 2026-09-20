@@ -52,6 +52,34 @@ class MatlabService {
       screeningResult.referable = Boolean(matlabData.referable);
       screeningResult.referral = String(matlabData.referral);
       screeningResult.gradcamUrl = `/api/files/gradcam/${screeningId}_gradcam.png`;
+
+      // Optional Phase 3 additive fields
+      if (matlabData.probabilities) {
+        screeningResult.probabilities = matlabData.probabilities;
+      }
+      if (matlabData.rawConfidence !== undefined) {
+        screeningResult.rawConfidence = Number(matlabData.rawConfidence);
+      }
+      if (matlabData.calibratedProbabilities) {
+        screeningResult.calibratedProbabilities = matlabData.calibratedProbabilities;
+      }
+      if (matlabData.calibratedConfidence !== undefined) {
+        screeningResult.calibratedConfidence = Number(matlabData.calibratedConfidence);
+      }
+      if (matlabData.referableRiskProbability !== undefined) {
+        screeningResult.referableRiskProbability = Number(matlabData.referableRiskProbability);
+      }
+      screeningResult.calibration = matlabData.calibration ? {
+        calibrated: Boolean(matlabData.calibration.calibrated),
+        temperature: matlabData.calibration.temperature ? Number(matlabData.calibration.temperature) : null,
+        method: matlabData.calibration.method || null,
+        modelVersion: matlabData.calibration.modelVersion || null,
+      } : {
+        calibrated: false,
+        temperature: null,
+        method: null,
+        modelVersion: null,
+      };
     }
 
     return screeningResult;
