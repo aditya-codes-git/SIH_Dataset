@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const getHeaders = (customHeaders = {}, roleParam = null) => {
   const role = roleParam || localStorage.getItem('retinoscan_demo_role') || 'operator';
@@ -101,12 +101,14 @@ export const api = {
   getFileUrl: (filePath, roleParam = null) => {
     if (!filePath) return '';
     const role = roleParam || localStorage.getItem('retinoscan_demo_role') || 'operator';
-    if (filePath.startsWith('http')) {
-      return filePath.includes('role=') ? filePath : `${filePath}${filePath.includes('?') ? '&' : '?'}role=${role}`;
+
+    // Normalize direct localhost:5000 URLs to relative paths so they route through proxy/tunnel
+    let cleanPath = filePath.replace(/^https?:\/\/(localhost|127\.0\.0\.1):5000/, '');
+    if (cleanPath.startsWith('http')) {
+      return cleanPath.includes('role=') ? cleanPath : `${cleanPath}${cleanPath.includes('?') ? '&' : '?'}role=${role}`;
     }
 
     // If it's a full filesystem path or basename from results
-    let cleanPath = filePath;
     if (cleanPath.includes('\\') || cleanPath.includes('/')) {
       const parts = cleanPath.split(/[\\/]/);
       const filename = parts[parts.length - 1];
@@ -121,7 +123,7 @@ export const api = {
 
     if (!cleanPath.startsWith('/')) cleanPath = `/${cleanPath}`;
     const separator = cleanPath.includes('?') ? '&' : '?';
-    const apiHost = BASE_URL.replace(/\/api\/?$/, '');
+    const apiHost = BASE_URL.startsWith('http') ? BASE_URL.replace(/\/api\/?$/, '') : '';
     return `${apiHost}${cleanPath}${separator}role=${role}`;
   }
 };

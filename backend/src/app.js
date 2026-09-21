@@ -20,10 +20,11 @@ const defaultOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
 const envOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',').map(s => s.trim()) : [];
 const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
 const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const isCloudflareTunnel = /^https?:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com$/;
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || isLocalhost.test(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || isLocalhost.test(origin) || isCloudflareTunnel.test(origin)) {
       return callback(null, true);
     }
     return callback(new Error(`CORS origin "${origin}" is not allowed`));
